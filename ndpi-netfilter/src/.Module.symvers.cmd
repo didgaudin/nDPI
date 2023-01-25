@@ -1,0 +1,1 @@
+cmd_/root/nDPI/ndpi-netfilter/src/Module.symvers := sed 's/ko$$/o/' /root/nDPI/ndpi-netfilter/src/modules.order | scripts/mod/modpost -m    -o /root/nDPI/ndpi-netfilter/src/Module.symvers -e -i Module.symvers  -N -T -
