@@ -28,7 +28,7 @@ static int is_port(u_int16_t a, u_int16_t b, u_int16_t c) {
 }
 
 static void ndpi_check_skype(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int32_t payload_len = packet->payload_packet_len;
 
   /* No need to do ntohl() with 0xFFFFFFFF */
@@ -105,7 +105,7 @@ static void ndpi_check_skype(struct ndpi_detection_module_struct *ndpi_struct, s
   }
 }
 
-static void ndpi_search_skype(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_skype(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
   NDPI_LOG_DBG(ndpi_struct, "search skype\n");
 

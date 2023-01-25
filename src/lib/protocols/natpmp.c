@@ -116,7 +116,7 @@ static int natpmp_is_valid(struct ndpi_packet_struct const * const packet, enum 
 static int ndpi_search_natpmp_extra(struct ndpi_detection_module_struct *ndpi_struct,
                                     struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct const * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   enum natpmp_type natpmp_type;
 
   if (natpmp_is_valid(packet, &natpmp_type) == 0)
@@ -162,10 +162,10 @@ static int ndpi_search_natpmp_extra(struct ndpi_detection_module_struct *ndpi_st
   return 1;
 }
 
-static void ndpi_search_natpmp(struct ndpi_detection_module_struct *ndpi_struct,
-                               struct ndpi_flow_struct *flow)
+void ndpi_search_natpmp(struct ndpi_detection_module_struct *ndpi_struct,
+                        struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct const * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   enum natpmp_type natpmp_type;
 
   NDPI_LOG_DBG(ndpi_struct, "search nat-pmp\n");

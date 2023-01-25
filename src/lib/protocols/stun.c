@@ -37,6 +37,15 @@
 
 /* ************************************************************ */
 
+int ndpi_stun_cache_enable=
+#ifndef __KERNEL__
+	1;
+#else
+	0;
+#endif
+
+/* ************************************************************ */
+
 u_int32_t get_stun_lru_key(struct ndpi_flow_struct *flow, u_int8_t rev) {
   if(rev) {
     if(flow->is_ipv6)
@@ -92,7 +101,7 @@ static void ndpi_int_stun_add_connection(struct ndpi_detection_module_struct *nd
       app_proto = NDPI_PROTOCOL_FACEBOOK_VOIP;
   }
 
-  if(ndpi_struct->stun_cache
+  if(ndpi_stun_cache_enable && ndpi_struct->stun_cache
      && (app_proto != NDPI_PROTOCOL_UNKNOWN)
      ) /* Cache flow sender info */ {
     u_int32_t key = get_stun_lru_key(flow, 0);
@@ -126,8 +135,7 @@ static void ndpi_int_stun_add_connection(struct ndpi_detection_module_struct *nd
 	  /* No sense to add STUN, but only subprotocols */
 
 #ifdef DEBUG_LRU
-	  printf("[LRU] ADDING %u / %u.%u [%u -> %u]\n", key, proto, app_proto,
-		 ntohs(packet->udp->source), ntohs(packet->udp->dest));
+	  printf("[LRU] ADDING %u / %u.%u\n", key, proto, app_proto);
 #endif
 
 	  ndpi_lru_add_to_cache(ndpi_struct->stun_cache, key, app_proto, ndpi_get_current_time(flow));
@@ -164,13 +172,19 @@ static ndpi_int_stun_t ndpi_int_check_stun(struct ndpi_detection_module_struct *
 					   const u_int8_t * payload,
 					   const u_int16_t payload_length,
 					   u_int16_t *app_proto) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int16_t msg_type, msg_len;
   int rc;
   
   if(packet->iph &&
      ((packet->iph->daddr == 0xFFFFFFFF /* 255.255.255.255 */) ||
      ((ntohl(packet->iph->daddr) & 0xF0000000) == 0xE0000000 /* A multicast address */))) {
+    NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
+    return(NDPI_IS_NOT_STUN);
+  }
+
+  /* Check UDT(UDP) handshake - Protocol Citrix */
+  if(  *(u_int16_t*)packet->payload == 0x0180 || *(u_int16_t*)packet->payload == 0x0280 || *(u_int16_t*)packet->payload == 0x0680) {
     NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
     return(NDPI_IS_NOT_STUN);
   }
@@ -211,7 +225,6 @@ static ndpi_int_stun_t ndpi_int_check_stun(struct ndpi_detection_module_struct *
     */
     if(payload[0] == 0x16) {
       /* Let's check if this is DTLS used by some socials */
-      struct ndpi_packet_struct *packet = &ndpi_struct->packet;
       u_int16_t total_len, version = htons(*((u_int16_t*) &packet->payload[1]));
 
       switch (version) {
@@ -461,9 +474,9 @@ stun_found:
   return rc;
 }
 
-static void ndpi_search_stun(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_stun(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int16_t app_proto;
 
   NDPI_LOG_DBG(ndpi_struct, "search stun\n");

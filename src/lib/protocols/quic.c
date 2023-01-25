@@ -18,18 +18,26 @@
  *
  */
 
+#if 0
 #if defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__
 #include <sys/endian.h>
+#endif
 #endif
 
 #include "ndpi_protocol_ids.h"
 #define NDPI_CURRENT_PROTO NDPI_PROTOCOL_QUIC
 #include "ndpi_api.h"
 
-#ifdef USE_HOST_LIBGCRYPT
-#include <gcrypt.h>
+#ifndef __KERNEL__
+ #ifdef USE_HOST_LIBGCRYPT
+ #include <gcrypt.h>
+ #else
+ #define HAVE_LIBGCRYPT 1
+ #include <gcrypt_light.h>
+ #endif
 #else
-#include <gcrypt_light.h>
+ #define HAVE_LIBGCRYPT 1
+ #include <gcrypt_light.h>
 #endif
 
 /* This dissector handles GQUIC and IETF-QUIC both.
@@ -246,7 +254,7 @@ static uint16_t gquic_get_u16(const uint8_t *buf, uint32_t version)
 }
 
 
-static char *__gcry_err(gpg_error_t err, char *buf, size_t buflen)
+char *__gcry_err(gpg_error_t err, char *buf, size_t buflen)
 {
   gpg_strerror_r(err, buf, buflen);
   /* I am not sure if the string will be always null-terminated...
@@ -319,7 +327,7 @@ typedef struct quic_decrypt_result {
   uint32_t data_len;   /* Size of decrypted data. */
 } quic_decrypt_result_t;
 
-
+//#include "../third_party/quic-crypt.c"
 /*
  * From wsutil/wsgcrypt.{c,h}
  */
@@ -350,8 +358,8 @@ static gcry_error_t hkdf_expand(int hashalgo, const uint8_t *prk, uint32_t prk_l
   uint8_t lastoutput[48];
   gcry_md_hd_t h;
   gcry_error_t err;
-  const unsigned int hash_len = gcry_md_get_algo_dlen(hashalgo);
   uint32_t offset;
+  const unsigned int hash_len = gcry_md_get_algo_dlen(hashalgo);
 
   /* Some sanity checks */
   if(!(out_len > 0 && out_len <= 255 * hash_len) ||
@@ -365,6 +373,7 @@ static gcry_error_t hkdf_expand(int hashalgo, const uint8_t *prk, uint32_t prk_l
   }
 
   for(offset = 0; offset < out_len; offset += hash_len) {
+    uint8_t c;
     gcry_md_reset(h);
     gcry_md_setkey(h, prk, prk_len); /* Set PRK */
     if(offset > 0) {
@@ -372,7 +381,7 @@ static gcry_error_t hkdf_expand(int hashalgo, const uint8_t *prk, uint32_t prk_l
     }
     gcry_md_write(h, info, info_len);                   /* info */
 
-    uint8_t c = offset / hash_len + 1;
+    c = offset / hash_len + 1;
     gcry_md_write(h, &c, sizeof(c));                    /* constant 0x01..N */
 
     memcpy(lastoutput, gcry_md_read(h, hashalgo), hash_len);
@@ -425,6 +434,10 @@ static int tls13_hkdf_expand_label_context(struct ndpi_detection_module_struct *
   gcry_error_t err;
   const unsigned int label_prefix_length = (unsigned int)strlen(label_prefix);
   const unsigned label_length = (unsigned int)strlen(label);
+  uint32_t info_len = 0;
+  uint8_t *info_data = NULL;
+  uint16_t length;
+  uint8_t label_vector_length;
 #ifdef NDPI_ENABLE_DEBUG_MESSAGES
   char buferr[128];
 #endif
@@ -452,15 +465,15 @@ static int tls13_hkdf_expand_label_context(struct ndpi_detection_module_struct *
     g_byte_array_append(info, context_hash, context_length);
   }
 #else
-  uint32_t info_len = 0;
-  uint8_t *info_data = (uint8_t *)ndpi_malloc(1024);
+  info_len = 0;
+  info_data = (uint8_t *)ndpi_malloc(1024);
   if(!info_data)
     return 0;
-  const uint16_t length = htons(out_len);
+  length = htons(out_len);
   memcpy(&info_data[info_len], &length, sizeof(length));
   info_len += sizeof(length);
 
-  const uint8_t label_vector_length = label_prefix_length + label_length;
+  label_vector_length = label_prefix_length + label_length;
   memcpy(&info_data[info_len], &label_vector_length, 1);
   info_len += 1;
   memcpy(&info_data[info_len], (const uint8_t *)label_prefix, label_prefix_length);
@@ -678,18 +691,20 @@ static int quic_decrypt_header(const uint8_t *packet_payload,
 			       int hp_cipher_algo, uint8_t *first_byte, uint32_t *pn,
 			       int loss_bits_negotiated)
 {
+  gcry_cipher_hd_t h;
+  uint32_t pkn_len, pkt_pkn, i;
+  uint8_t sample[16],pkn_bytes[4], mask[5] = { 0 }, packet0;
+
   if(!hp_cipher->hp_cipher) {
     /* Need to know the cipher */
     return 0;
   }
-  gcry_cipher_hd_t h = hp_cipher->hp_cipher;
+  h = hp_cipher->hp_cipher;
 
   /* Sample is always 16 bytes and starts after PKN (assuming length 4).
      https://tools.ietf.org/html/draft-ietf-quic-tls-22#section-5.4.2 */
-  uint8_t sample[16];
   memcpy(sample, packet_payload + pn_offset + 4, 16);
 
-  uint8_t mask[5] = { 0 };
   switch (hp_cipher_algo) {
   case GCRY_CIPHER_AES128:
   case GCRY_CIPHER_AES256:
@@ -704,7 +719,7 @@ static int quic_decrypt_header(const uint8_t *packet_payload,
   }
 
   /* https://tools.ietf.org/html/draft-ietf-quic-tls-22#section-5.4.1 */
-  uint8_t packet0 = packet_payload[0];
+  packet0 = packet_payload[0];
   if((packet0 & 0x80) == 0x80) {
     /* Long header: 4 bits masked */
     packet0 ^= mask[0] & 0x0f;
@@ -718,12 +733,11 @@ static int quic_decrypt_header(const uint8_t *packet_payload,
       packet0 ^= mask[0] & 0x07;
     }
   }
-  uint32_t pkn_len = (packet0 & 0x03) + 1;
+  pkn_len = (packet0 & 0x03) + 1;
   /* printf("packet0 0x%x pkn_len %d\n", packet0, pkn_len); */
 
-  uint8_t pkn_bytes[4];
   memcpy(pkn_bytes, packet_payload + pn_offset, pkn_len);
-  uint32_t pkt_pkn = 0, i;
+  pkt_pkn = 0;
   for(i = 0; i < pkn_len; i++) {
     pkt_pkn |= (uint32_t)(pkn_bytes[i] ^ mask[1 + i]) << (8 * (pkn_len - 1 - i));
   }
@@ -941,7 +955,7 @@ static uint8_t *decrypt_initial_packet(struct ndpi_detection_module_struct *ndpi
 				       uint32_t *clear_payload_len)
 {
   uint64_t token_length, payload_length, packet_number;
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   uint8_t first_byte;
   uint32_t pkn32, pn_offset, pkn_len, offset;
   quic_ciphers ciphers; /* Client initial ciphers */
@@ -1278,7 +1292,7 @@ const uint8_t *get_crypto_data(struct ndpi_detection_module_struct *ndpi_struct,
 static uint8_t *get_clear_payload(struct ndpi_detection_module_struct *ndpi_struct,
 				  uint32_t version, uint32_t *clear_payload_len)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int8_t *clear_payload;
   u_int8_t dest_conn_id_len;
   u_int8_t source_conn_id_len;
@@ -1310,9 +1324,8 @@ static uint8_t *get_clear_payload(struct ndpi_detection_module_struct *ndpi_stru
     }
 
     source_conn_id_len = packet->payload[6 + dest_conn_id_len];
-    const u_int8_t *dest_conn_id = &packet->payload[6];
     clear_payload = decrypt_initial_packet(ndpi_struct,
-					   dest_conn_id, dest_conn_id_len,
+					   &packet->payload[6], dest_conn_id_len,
 					   source_conn_id_len, version,
 					   clear_payload_len);
   }
@@ -1325,7 +1338,7 @@ void process_tls(struct ndpi_detection_module_struct *ndpi_struct,
 		 const u_int8_t *crypto_data, uint32_t crypto_data_len,
 		 uint32_t version)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   /* Overwriting packet payload */
   u_int16_t p_len;
@@ -1398,7 +1411,6 @@ void process_chlo(struct ndpi_detection_module_struct *ndpi_struct,
 
       NDPI_LOG_DBG2(ndpi_struct, "SNI: [%s]\n",
                     flow->host_server_name);
-
       ndpi_match_host_subprotocol(ndpi_struct, flow,
                                   flow->host_server_name,
                                   strlen(flow->host_server_name),
@@ -1451,7 +1463,7 @@ void process_chlo(struct ndpi_detection_module_struct *ndpi_struct,
 static int may_be_0rtt(struct ndpi_detection_module_struct *ndpi_struct,
 		       struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   uint32_t version;
   u_int8_t first_byte;
   u_int8_t pub_bit1, pub_bit2, pub_bit3, pub_bit4;
@@ -1513,7 +1525,7 @@ static int may_be_0rtt(struct ndpi_detection_module_struct *ndpi_struct,
 static int may_be_initial_pkt(struct ndpi_detection_module_struct *ndpi_struct,
 			      uint32_t *version)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int8_t first_byte;
   u_int8_t pub_bit1, pub_bit2, pub_bit3, pub_bit4, pub_bit5, pub_bit7, pub_bit8;
   u_int8_t dest_conn_id_len, source_conn_id_len;
@@ -1645,7 +1657,7 @@ static void ndpi_search_quic(struct ndpi_detection_module_struct *ndpi_struct,
 static int ndpi_search_quic_extra(struct ndpi_detection_module_struct *ndpi_struct,
 				  struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   /* We are elaborating a packet following the initial CHLO/ClientHello.
      Two cases:
@@ -1691,8 +1703,10 @@ static int ndpi_search_quic_extra(struct ndpi_detection_module_struct *ndpi_stru
     /* In "extra_eval" data path, if we change the classification, we need to update the category, too */
     proto.master_protocol = NDPI_PROTOCOL_QUIC;
     proto.app_protocol = NDPI_PROTOCOL_SNAPCHAT_CALL;
+#ifndef __KERNEL__
     proto.category = NDPI_PROTOCOL_CATEGORY_UNSPECIFIED;
     ndpi_fill_protocol_category(ndpi_struct, flow, &proto);
+#endif
   } else {
     /* Unexpected traffic pattern: we should investigate it... */
     NDPI_LOG_INFO(ndpi_struct, "To investigate...\n");

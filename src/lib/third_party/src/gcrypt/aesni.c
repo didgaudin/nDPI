@@ -61,7 +61,10 @@ int mbedtls_aesni_has_support( unsigned int what )
 #endif
 
 #if defined(linux) || defined(__linux__)
-  if(has_aesni_checked == 0) {
+  unsigned int eax, ebx, ecx, edx;
+
+#ifndef __KERNEL__
+  if(what == MBEDTLS_AESNI_AES) {
     /*
       NOTE
 
@@ -93,18 +96,9 @@ int mbedtls_aesni_has_support( unsigned int what )
 
       has_aesni_checked = 1;
     }
-  }
-  
   return(cached_has_aesni);
-
-#if 0
-  if (__get_cpuid(1, &eax, &ebx, &ecx, &edx) == 0)
-  {
-    return 0;
   }
-
-  return ( (ecx & what) != 0 );
-#endif
+#endif /* ! __KERNEL__ */
 #elif defined(WIN32) || defined(WIN64)
   int cpuInfo[4];
 

@@ -32,7 +32,7 @@
 
 static void ndpi_check_citrix(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int32_t payload_len = packet->payload_packet_len;
 
   if(payload_len == 6) {
@@ -57,7 +57,7 @@ static void ndpi_check_citrix(struct ndpi_detection_module_struct *ndpi_struct, 
   NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
 }
 
-static void ndpi_search_citrix(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_citrix(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
   NDPI_LOG_DBG(ndpi_struct, "search citrix\n");
 
@@ -72,7 +72,7 @@ void init_citrix_dissector(struct ndpi_detection_module_struct *ndpi_struct, u_i
   ndpi_set_bitmask_protocol_detection("Citrix", ndpi_struct, *id,
 				      NDPI_PROTOCOL_CITRIX,
 				      ndpi_search_citrix,
-				      NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_TCP_WITH_PAYLOAD_WITHOUT_RETRANSMISSION,
+				      NDPI_SELECTION_BITMASK_PROTOCOL_V4_V6_TCP_OR_UDP_WITH_PAYLOAD_WITHOUT_RETRANSMISSION,
 				      SAVE_DETECTION_BITMASK_AS_UNKNOWN,
 				      ADD_TO_DETECTION_BITMASK);
   *id += 1;

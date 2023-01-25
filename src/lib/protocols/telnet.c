@@ -35,7 +35,7 @@
 
 static int search_telnet_again(struct ndpi_detection_module_struct *ndpi_struct,
 			       struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   int i;
 
 #ifdef TELNET_DEBUG
@@ -147,7 +147,7 @@ __forceinline static
 #endif
 u_int8_t search_iac(struct ndpi_detection_module_struct *ndpi_struct,
 		    struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   u_int16_t a;
 
@@ -184,8 +184,8 @@ u_int8_t search_iac(struct ndpi_detection_module_struct *ndpi_struct,
 /* ************************************************************************ */
 
 /* this detection also works asymmetrically */
-static void ndpi_search_telnet_tcp(struct ndpi_detection_module_struct *ndpi_struct,
-				   struct ndpi_flow_struct *flow) {
+void ndpi_search_telnet_tcp(struct ndpi_detection_module_struct *ndpi_struct,
+			    struct ndpi_flow_struct *flow) {
   NDPI_LOG_DBG(ndpi_struct, "search telnet\n");
 
   if(search_iac(ndpi_struct, flow) == 1) {

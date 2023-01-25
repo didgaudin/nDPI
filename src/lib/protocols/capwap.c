@@ -62,7 +62,7 @@ static int is_capwap_multicast(const struct ndpi_packet_struct *packet)
 
 static void ndpi_search_setup_capwap(struct ndpi_detection_module_struct *ndpi_struct,
 				     struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int16_t sport, dport;
    
   sport = ntohs(packet->udp->source), dport = ntohs(packet->udp->dest);
@@ -121,9 +121,9 @@ static void ndpi_search_setup_capwap(struct ndpi_detection_module_struct *ndpi_s
   ndpi_int_capwap_add_connection(ndpi_struct, flow);
 }
 
-static void ndpi_search_capwap(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_capwap(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   if(packet->udp && (flow->detected_protocol_stack[0] == NDPI_PROTOCOL_UNKNOWN))
     ndpi_search_setup_capwap(ndpi_struct, flow);

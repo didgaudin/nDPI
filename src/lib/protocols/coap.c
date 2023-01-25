@@ -103,10 +103,10 @@ static int isCoAPport(u_int16_t port) {
 /**
  * Dissector function that searches CoAP headers
  */
-static void ndpi_search_coap(struct ndpi_detection_module_struct *ndpi_struct,
-			    struct ndpi_flow_struct *flow)
+void ndpi_search_coap (struct ndpi_detection_module_struct *ndpi_struct,
+		       struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   struct ndpi_coap_hdr * h = (struct ndpi_coap_hdr*) packet->payload;
 
   // search for udp packet

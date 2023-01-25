@@ -24,6 +24,22 @@
 #ifndef __NDPI_INCLUDES_H__
 #define __NDPI_INCLUDES_H__
 
+#ifdef __KERNEL__
+
+#include <asm/byteorder.h>
+#include <linux/types.h>
+#include <linux/spinlock.h>
+#include <linux/in.h>
+#include <linux/times.h>
+#include <linux/ctype.h>
+#include <linux/slab.h>
+#define printf(format, ...)    printk(format,##__VA_ARGS__)
+#ifndef IPVERSION
+#define        IPVERSION       4
+#endif
+
+#else
+
 #include <stdint.h>
 #include <stdio.h>
 #include <stdarg.h>
@@ -58,15 +74,19 @@
 #include <netinet/in_systm.h>
 
 #endif
-#endif
-#endif
 
-#endif	/* Win32 */
+#endif
+#endif
 
 #if defined __OpenBSD__
+#include <pthread.h>
 #include "ndpi_includes_OpenBSD.h"
 #else
 typedef struct timeval pkt_timeval;
 #endif /* __OpenBSD__ */
+
+#endif	/* Win32 */
+
+#endif /* __KERNEL__ */
 
 #endif /* __NDPI_INCLUDES_H__ */

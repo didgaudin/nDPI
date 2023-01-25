@@ -30,8 +30,8 @@
 #include "ndpi_api.h"
 
 
-static void ndpi_search_cpha(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+void ndpi_search_cpha(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   const u_int16_t cpha_port = htons(8116);
   
   NDPI_LOG_DBG(ndpi_struct, "search CPHA\n");

@@ -41,12 +41,15 @@ extern "C" {
 #define SAVE_DETECTION_BITMASK_AS_UNKNOWN     1
 #define NO_SAVE_DETECTION_BITMASK_AS_UNKNOWN  0
 
+  extern int ndpi_debug_print_level;
   /*
     In case a custom DGA function is used, the fucntion
     below must be overwritten,
   */
   extern ndpi_custom_dga_predict_fctn ndpi_dga_function;
 
+  extern ndpi_debug_function_ptr ndpi_debug_print_init;
+  extern ndpi_log_level_t ndpi_debug_level_init;
   /**
    * Check if a string is encoded with punycode
    * ( https://tools.ietf.org/html/rfc3492 )
@@ -172,8 +175,10 @@ extern "C" {
    * @par ndpi_mod  = the struct created for the protocol detection
    * @par match     = the struct passed to match the protocol
    *
+   * @return  0 - success, -1 - error
+   *
    */
-  void ndpi_init_protocol_match(struct ndpi_detection_module_struct *ndpi_mod,
+  int ndpi_init_protocol_match(struct ndpi_detection_module_struct *ndpi_mod,
 				ndpi_protocol_match *match);
 
   /**
@@ -594,6 +599,19 @@ extern "C" {
 				   u_int16_t master_protocol,
 				   char *name, u_int name_len);
 
+  u_int16_t ndpi_get_proto_by_name(struct ndpi_detection_module_struct *ndpi_mod,
+		  		   const char *name);
+
+  /**
+   * Get classification confidence as string
+   *
+   * @par     confidence      = the confidence value
+   * @return  the string name of the confidence result
+   *
+   */
+  const char* ndpi_confidence_get_name(ndpi_confidence_t confidence);
+
+#ifndef __KERNEL__
   /**
    * Get protocol category as string
    *
@@ -604,15 +622,6 @@ extern "C" {
    */
   const char* ndpi_category_get_name(struct ndpi_detection_module_struct *ndpi_mod,
 				     ndpi_protocol_category_t category);
-
-  /**
-   * Get classification confidence as string
-   *
-   * @par     confidence      = the confidence value
-   * @return  the string name of the confidence result
-   *
-   */
-  const char* ndpi_confidence_get_name(ndpi_confidence_t confidence);
 
   /**
    * Set protocol category string
@@ -635,6 +644,7 @@ extern "C" {
   ndpi_protocol_category_t ndpi_get_proto_category(struct ndpi_detection_module_struct *ndpi_mod,
 						   ndpi_protocol proto);
 
+#endif
   /**
    * Get the protocol name associated to the ID
    *
@@ -688,6 +698,7 @@ extern "C" {
    */
   int ndpi_get_category_id(struct ndpi_detection_module_struct *ndpi_mod, char *cat);
 
+#ifndef __KERNEL__
   /**
    * Write the list of the supported protocols
    *
@@ -709,6 +720,7 @@ extern "C" {
    */
   void ndpi_dump_risks_score(void);
 
+#endif
   /**
    * Read a file and load the protocols
    *
@@ -890,6 +902,11 @@ extern "C" {
    */
   void ndpi_free_automa(void *_automa);
 
+  int ndpi_string_to_automa(struct ndpi_detection_module_struct *ndpi_str,
+                           void *ac_automa, const char *value,
+                           u_int16_t protocol_id, ndpi_protocol_category_t category,
+                           ndpi_protocol_breed_t breed, uint8_t level,
+                           u_int8_t add_ends_with);
   /**
    * Add a string to match to an automata
    *
@@ -918,6 +935,9 @@ extern "C" {
    *
    */
   void ndpi_finalize_automa(void *_automa);
+
+  void *ndpi_automa_host(struct ndpi_detection_module_struct *ndpi_struct);
+  void **ndpi_get_automata(struct ndpi_detection_module_struct *ndpi_str);
 
   /**
    * Get the automa statistics
@@ -956,6 +976,7 @@ extern "C" {
 			    void *user_data);
   int ndpi_load_hostname_category(struct ndpi_detection_module_struct *ndpi_struct,
 				  const char *name_to_add, ndpi_protocol_category_t category);
+#ifndef __KERNEL__
   int ndpi_load_category(struct ndpi_detection_module_struct *ndpi_struct,
 			 const char *ip_or_name, ndpi_protocol_category_t category,
 			 void *user_data);
@@ -968,12 +989,13 @@ extern "C" {
 				     ndpi_protocol *ret);
   int ndpi_match_custom_category(struct ndpi_detection_module_struct *ndpi_struct,
 				 char *name, u_int name_len, ndpi_protocol_category_t *id);
-  void ndpi_fill_protocol_category(struct ndpi_detection_module_struct *ndpi_struct,
-				   struct ndpi_flow_struct *flow,
-				   ndpi_protocol *ret);
   int ndpi_get_custom_category_match(struct ndpi_detection_module_struct *ndpi_struct,
 				     char *name_or_ip, u_int name_len,
 				     ndpi_protocol_category_t *id);
+#endif
+  void ndpi_fill_protocol_category(struct ndpi_detection_module_struct *ndpi_struct,
+				   struct ndpi_flow_struct *flow,
+				   ndpi_protocol *ret);
   int ndpi_set_detection_preferences(struct ndpi_detection_module_struct *ndpi_mod,
 				     ndpi_detection_preference pref,
 				     int value);
@@ -1041,6 +1063,8 @@ extern "C" {
 				    ndpi_protocol_category_t *category,
 				    ndpi_protocol_breed_t *breed);
 
+  int ndpi_handle_rule(struct ndpi_detection_module_struct *ndpi_str, char *rule, u_int8_t do_add);
+
   /**
    * Specifies the threshold used to trigger the NDPI_TLS_CERTIFICATE_ABOUT_TO_EXPIRE
    * flow risk that by default is set to 30 days
@@ -1054,6 +1078,7 @@ extern "C" {
 
 
   /* Utility functions to set ndpi malloc/free/print wrappers */
+  void set_ndpi_ticks_per_second(u_int32_t ticks_per_second);
   void set_ndpi_malloc(void* (*__ndpi_malloc)(size_t size));
   void set_ndpi_free(void  (*__ndpi_free)(void *ptr));
   void set_ndpi_flow_malloc(void* (*__ndpi_flow_malloc)(size_t size));
@@ -1072,8 +1097,6 @@ extern "C" {
   u_int8_t ndpi_extra_dissection_possible(struct ndpi_detection_module_struct *ndpi_struct,
 					  struct ndpi_flow_struct *flow);
   u_int8_t ndpi_is_safe_ssl_cipher(u_int32_t cipher);
-  const char* ndpi_cipher2str(u_int32_t cipher, char unknown_cipher[8]);
-  const char* ndpi_tunnel2str(ndpi_packet_tunnel tt);
   u_int16_t ndpi_guess_host_protocol_id(struct ndpi_detection_module_struct *ndpi_struct,
 					struct ndpi_flow_struct *flow);
   int ndpi_has_human_readeable_string(struct ndpi_detection_module_struct *ndpi_struct,
@@ -1095,6 +1118,13 @@ extern "C" {
 
   int ndpi_load_ipv4_ptree(struct ndpi_detection_module_struct *ndpi_str,
 			   const char *path, u_int16_t protocol_id);
+#ifndef __KERNEL__    
+  const char* ndpi_cipher2str(u_int32_t cipher, char unknown_cipher[8]);
+  const char* ndpi_tunnel2str(ndpi_packet_tunnel tt);
+  int ndpi_has_human_readeable_string(struct ndpi_detection_module_struct *ndpi_struct,
+				      char *buffer, u_int buffer_size,
+				      u_int8_t min_string_match_len, /* Will return 0 if no string > min_string_match_len have been found */
+				      char *outbuf, u_int outbuf_len);
   int ndpi_dpi2json(struct ndpi_detection_module_struct *ndpi_struct,
 		    struct ndpi_flow_struct *flow,
 		    ndpi_protocol l7_protocol,
@@ -1108,6 +1138,7 @@ extern "C" {
 		     u_int16_t src_port, u_int16_t dst_port,
 		     ndpi_protocol l7_protocol,
 		     ndpi_serializer *serializer);
+#endif
 
   char *ndpi_get_ip_proto_name(u_int16_t ip_proto, char *name, unsigned int name_len);
 
@@ -1164,6 +1195,7 @@ extern "C" {
   int ndpi_check_dga_name(struct ndpi_detection_module_struct *ndpi_str,
 			  struct ndpi_flow_struct *flow,
 			  char *name, u_int8_t is_hostname, u_int8_t check_subproto);
+#ifndef __KERNEL__    
 
   /* Serializer (supports JSON, TLV, CSV) */
 
@@ -1721,6 +1753,7 @@ extern "C" {
                             ndpi_risk_enum risk,
                             ndpi_confidence_t confidence,
                             ndpi_protocol l7_protocol);
+#endif /* KERNEL */
   const char* ndpi_risk2str(ndpi_risk_enum risk);
   const char* ndpi_severity2str(ndpi_risk_severity s);
   ndpi_risk_info* ndpi_risk2severity(ndpi_risk_enum risk);
@@ -1784,7 +1817,7 @@ extern "C" {
 
   u_int32_t ndpi_quick_16_byte_hash(u_int8_t *in_16_bytes_long);
 
-  /* ******************************* */
+  extern int ndpi_stun_cache_enable;
 
   /**
    * Initialize the hashmap.
@@ -1835,6 +1868,7 @@ extern "C" {
 
   /* ******************************* */
 
+#ifndef __KERNEL__
   int ndpi_load_geoip(struct ndpi_detection_module_struct *ndpi_str,
 		      const char *ip_city_data, const char *ip_as_data);
   void ndpi_free_geoip(struct ndpi_detection_module_struct *ndpi_str);
@@ -1843,13 +1877,25 @@ extern "C" {
   int ndpi_get_geoip_country_continent(struct ndpi_detection_module_struct *ndpi_str, char *ip,
 				       char *country_code, u_int8_t country_code_len,
 				       char *continent, u_int8_t continent_len);
+#endif
 
   /* ******************************* */
 
   char* ndpi_get_flow_name(struct ndpi_flow_struct *flow);
 
+#ifndef __KERNEL__
+  struct ndpi_packet_struct *
+  ndpi_get_packet_struct(struct ndpi_detection_module_struct *ndpi_mod);
+#else
+  static inline struct ndpi_packet_struct *
+  ndpi_get_packet_struct(struct ndpi_detection_module_struct *ndpi_mod) {
+	return &ndpi_mod->packet_struct[smp_processor_id()];
+  }
+#endif
+
   /* ******************************* */
 
+#ifndef __KERNEL__
   ndpi_bitmap* ndpi_bitmap_alloc(void);
   void ndpi_bitmap_free(ndpi_bitmap* b);
   u_int64_t ndpi_bitmap_cardinality(ndpi_bitmap* b);
@@ -1873,6 +1919,7 @@ extern "C" {
   char* ndpi_get_flow_risk_info(struct ndpi_flow_struct *flow,
 				char *out, u_int out_len,
 				u_int8_t use_json);
+#endif
 
 #ifdef __cplusplus
 }

@@ -29,6 +29,10 @@
 
 #include "ndpi_api.h"
 
+#ifdef __GNUC__
+#pragma GCC diagnostic ignored "-Wimplicit-fallthrough"
+#endif
+
 /* See http://web.mit.edu/kolya/afs/rx/rx-spec for protocol description. */
 
 /* The should be no need for explicit packing, but just in case... */
@@ -76,10 +80,11 @@ struct ndpi_rx_header {
 
 
 
-static void ndpi_check_rx(struct ndpi_detection_module_struct *ndpi_struct,
-                          struct ndpi_flow_struct *flow)
+void ndpi_check_rx(struct ndpi_detection_module_struct *ndpi_struct,
+                   struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
+  struct ndpi_rx_header *header;
   u_int32_t payload_len = packet->payload_packet_len;
 
   NDPI_LOG_DBG2(ndpi_struct, "RX: pck: %d, dir[0]: %d, dir[1]: %d\n",
@@ -91,7 +96,7 @@ static void ndpi_check_rx(struct ndpi_detection_module_struct *ndpi_struct,
     return;
   }
   
-  struct ndpi_rx_header *header = (struct ndpi_rx_header*) packet->payload;
+  header = (struct ndpi_rx_header*) packet->payload;
 
   /**
    * Useless check: a session could be detected also after it starts 
@@ -202,8 +207,8 @@ static void ndpi_check_rx(struct ndpi_detection_module_struct *ndpi_struct,
   }
 }
 
-static void ndpi_search_rx(struct ndpi_detection_module_struct *ndpi_struct,
-                           struct ndpi_flow_struct *flow)
+void ndpi_search_rx(struct ndpi_detection_module_struct *ndpi_struct,
+                    struct ndpi_flow_struct *flow)
 {
   NDPI_LOG_DBG(ndpi_struct, "search RX\n");
   if (flow->detected_protocol_stack[0] != NDPI_PROTOCOL_RX) {

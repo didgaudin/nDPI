@@ -32,7 +32,8 @@
 static void ssdp_parse_lines(struct ndpi_detection_module_struct
 					 *ndpi_struct, struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
+
 
   ndpi_parse_packet_line_info(ndpi_struct, flow);
 
@@ -61,9 +62,9 @@ static void ndpi_int_ssdp_add_connection(struct ndpi_detection_module_struct
 }
 
 /* this detection also works asymmetrically */
-static void ndpi_search_ssdp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_ssdp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 	
   NDPI_LOG_DBG(ndpi_struct, "search ssdp\n");
   if (packet->udp != NULL) {

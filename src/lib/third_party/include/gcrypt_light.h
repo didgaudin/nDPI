@@ -17,14 +17,14 @@
 #define GPG_ERR_KEY -1
 #define GPG_ERR_ANY -2
 #define GPG_ERR_INV_ARG -3
-#define GCRYCTL_INITIALIZATION_FINISHED_P 1,0
+#define GCRYCTL_INITIALIZATION_FINISHED_P 1
 #define GCRYCTL_INITIALIZATION_FINISHED 2
 #define GCRYCTL_RESET 3
 
 #define GCRY_AES_KEY_SIZE 32
 #define GCRY_AES_AUTH_SIZE 256
 #define GCRY_AES_TAG_SIZE 32
-#define GCRY_AES_IV_SIZE 12
+#define GCRY_AES_IV_SIZE 32
 
 typedef int gcry_error_t;
 typedef gcry_error_t gpg_error_t;

@@ -35,10 +35,10 @@ static void ndpi_int_mgcp_add_connection(struct ndpi_detection_module_struct
 }
 
 
-static void ndpi_search_mgcp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_mgcp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
   
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   char const * endpoint;
   char const * endpoint_hostname;

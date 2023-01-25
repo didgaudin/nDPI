@@ -39,6 +39,7 @@
  OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE. 
 */
 
+#ifndef __KERNEL__
 #include <assert.h> /* assert */
 #include <ctype.h> /* isdigit */
 #include <errno.h> /* errno */
@@ -53,6 +54,10 @@
 #include <netinet/in.h> /* BSD, Linux: for inet_addr */
 #include <arpa/inet.h> /* BSD, Linux, Solaris: for inet_addr */
 #endif
+#else
+#include <ndpi_kernel_compat.h>
+#endif
+
 #include "ndpi_patricia.h"
 
 static void ndpi_DeleteEntry(void *a) {
@@ -91,8 +96,8 @@ static int ndpi_comp_with_mask (void *addr, void *dest, u_int mask) {
   return (*pa & m) == (*pd &m);
 }
 
-#if 0
 /* this allows incomplete prefix */
+#ifndef __KERNEL__
 static int ndpi_my_inet_pton (int af, const char *src, void *dst)
 {
   if(af == AF_INET) {
@@ -131,11 +136,13 @@ static int ndpi_my_inet_pton (int af, const char *src, void *dst)
     return -1;
   }
 }
+#else
+#define ndpi_my_inet_pton(A,S,D) inet_pton(A,S,D)
 #endif
 
+#if 0
 #define PATRICIA_MAX_THREADS		16
 
-#if 0
 /* 
  * convert prefix information to ascii string with length
  * thread safe and (almost) re-entrant implementation
@@ -262,7 +269,7 @@ static ndpi_prefix_t * ndpi_New_Prefix (int family, void *dest, int bitlen)
 }
 #endif
 
-static  ndpi_prefix_t *
+ndpi_prefix_t *
 ndpi_Ref_Prefix (ndpi_prefix_t * prefix)
 {
   if(prefix == NULL)
@@ -276,7 +283,7 @@ ndpi_Ref_Prefix (ndpi_prefix_t * prefix)
   return (prefix);
 }
 
-static void 
+void 
 ndpi_Deref_Prefix (ndpi_prefix_t * prefix)
 {
   if(prefix == NULL)
@@ -420,9 +427,10 @@ ndpi_patricia_clone_walk(ndpi_patricia_node_t *node, ndpi_patricia_tree_t *dst)
 ndpi_patricia_tree_t *
 ndpi_patricia_clone (const ndpi_patricia_tree_t * const from)
 {
+  ndpi_patricia_tree_t *patricia;
   if(!from) return (NULL);
 
-  ndpi_patricia_tree_t *patricia = ndpi_patricia_new(from->maxbits);
+  patricia = ndpi_patricia_new(from->maxbits);
 
   if(!patricia) return (NULL);
 
@@ -998,10 +1006,9 @@ ndpi_patricia_remove (ndpi_patricia_tree_t *patricia, ndpi_patricia_node_t *node
 }
 
 /* { from demo.c */
-#if 0
 
 /* ndpi_ascii2prefix */
-static ndpi_prefix_t * ndpi_ascii2prefix (int family, char *string)
+ndpi_prefix_t * ndpi_ascii2prefix (int family, char *string)
 {
   long bitlen;
   long maxbitlen = 0;
@@ -1043,22 +1050,27 @@ static ndpi_prefix_t * ndpi_ascii2prefix (int family, char *string)
   if(family == AF_INET) {
     if(ndpi_my_inet_pton (AF_INET, string, &sin) <= 0)
       return (NULL);
-    return (ndpi_New_Prefix (AF_INET, &sin, bitlen));
+    if(htonl(sin.s_addr) & (0xfffffffful >> bitlen))
+      return (NULL);
+    return (ndpi_New_Prefix2 (AF_INET, &sin, bitlen, NULL));
   }
   else if(family == AF_INET6) {
     // Get rid of this with next IPv6 upgrade
 #if defined(NT) && !defined(HAVE_INET_NTOP)
     inet6_addr(string, &sin6);
-    return (ndpi_New_Prefix (AF_INET6, &sin6, bitlen));
+    return (ndpi_New_Prefix2 (AF_INET6, &sin6, bitlen, NULL));
 #else
     if(inet_pton (AF_INET6, string, &sin6) <= 0)
       return (NULL);
 #endif /* NT */
-    return (ndpi_New_Prefix (AF_INET6, &sin6, bitlen));
+    /* FIXME check network mask! */
+    return (ndpi_New_Prefix2 (AF_INET6, &sin6, bitlen, NULL));
   }
   else
     return (NULL);
 }
+
+#if 0
 
 ndpi_patricia_node_t *
 ndpi_make_and_lookup (ndpi_patricia_tree_t *tree, char *string)

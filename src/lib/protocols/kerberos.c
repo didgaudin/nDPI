@@ -40,7 +40,7 @@ static int ndpi_search_kerberos_extra(struct ndpi_detection_module_struct *ndpi_
 static int krb_decode_asn1_length(struct ndpi_detection_module_struct *ndpi_struct,
                                   size_t * const kasn1_offset)
 {
-  struct ndpi_packet_struct * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   int64_t length;
   u_int16_t value_len;
 
@@ -63,7 +63,7 @@ static int krb_decode_asn1_length(struct ndpi_detection_module_struct *ndpi_stru
 static int krb_decode_asn1_sequence_type(struct ndpi_detection_module_struct *ndpi_struct,
                                          size_t * const kasn1_offset)
 {
-  struct ndpi_packet_struct * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   if (packet->payload_packet_len <= *kasn1_offset + 1 /* length octet */ ||
       packet->payload[*kasn1_offset] != 0x30 /* Universal Constructed Tag Type: Sequence */)
@@ -81,7 +81,7 @@ static int krb_decode_asn1_string_type(struct ndpi_detection_module_struct *ndpi
                                        size_t * const kasn1_offset,
                                        char const ** const out)
 {
-  struct ndpi_packet_struct * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   int length;
 
   if (packet->payload_packet_len <= *kasn1_offset + 1 /* length octet */ ||
@@ -113,7 +113,7 @@ static int krb_decode_asn1_int_type(struct ndpi_detection_module_struct *ndpi_st
                                     size_t * const kasn1_offset,
                                     int * const out)
 {
-  struct ndpi_packet_struct * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   int length;
 
   if (packet->payload_packet_len <= *kasn1_offset + 1 /* length octet */ ||
@@ -148,7 +148,7 @@ static int krb_decode_asn1_int_type(struct ndpi_detection_module_struct *ndpi_st
 static int krb_decode_asn1_blocks_skip(struct ndpi_detection_module_struct *ndpi_struct,
                                        size_t * const kasn1_offset)
 {
-  struct ndpi_packet_struct * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   int length;
 
   if (packet->payload_packet_len <= *kasn1_offset + 1 /* length octet */ ||
@@ -304,9 +304,9 @@ static void ndpi_int_kerberos_add_connection(struct ndpi_detection_module_struct
 
 /* ************************************************* */
 
-static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struct,
-				 struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struct,
+			  struct ndpi_flow_struct *flow) {
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int16_t sport = packet->tcp ? ntohs(packet->tcp->source) : ntohs(packet->udp->source);
   u_int16_t dport = packet->tcp ? ntohs(packet->tcp->dest) : ntohs(packet->udp->dest);
   const u_int8_t *original_packet_payload = NULL;
@@ -677,7 +677,7 @@ static void ndpi_search_kerberos(struct ndpi_detection_module_struct *ndpi_struc
 static int ndpi_search_kerberos_extra(struct ndpi_detection_module_struct *ndpi_struct,
 				      struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
 #ifdef KERBEROS_DEBUG
   printf("[Kerberos] Extra function\n");

@@ -38,7 +38,7 @@ static void ndpi_int_vhua_add_connection(struct ndpi_detection_module_struct *nd
 
 
 static void ndpi_check_vhua(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_char p0[] =  { 0x05, 0x14, 0x3a, 0x05, 0x08, 0xf8, 0xa1, 0xb1, 0x03 };
 
   /* Break after 3 packets. */
@@ -51,7 +51,7 @@ static void ndpi_check_vhua(struct ndpi_detection_module_struct *ndpi_struct, st
   }
 }
 
-static void ndpi_search_vhua(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
+void ndpi_search_vhua(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
   NDPI_LOG_DBG(ndpi_struct, "search VHUA\n");
 
   /* skip marked packets */

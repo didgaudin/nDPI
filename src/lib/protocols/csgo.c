@@ -26,16 +26,17 @@
 
 #include "ndpi_api.h"
 
-static void ndpi_search_csgo(struct ndpi_detection_module_struct* ndpi_struct, struct ndpi_flow_struct* flow) {
-  struct ndpi_packet_struct* packet = &ndpi_struct->packet;
+void ndpi_search_csgo(struct ndpi_detection_module_struct* ndpi_struct, struct ndpi_flow_struct* flow) {
+  struct ndpi_packet_struct* packet = ndpi_get_packet_struct(ndpi_struct);
 
-  if(packet->udp != NULL) {
-    if(packet->payload_packet_len < sizeof(uint32_t)) {
+  if (packet->udp != NULL) {
+    uint32_t w;
+    if (packet->payload_packet_len < sizeof(uint32_t)) {
       NDPI_LOG_DBG2(ndpi_struct, "Short csgo packet\n");
       return;
     }
 
-    uint32_t w = htonl(get_u_int32_t(packet->payload, 0));
+    w = htonl(get_u_int32_t(packet->payload, 0));
     NDPI_LOG_DBG2(ndpi_struct, "CSGO: word %08x\n", w);
 
     if(!flow->l4.udp.csgo_state && packet->payload_packet_len == 23 && w == 0xfffffffful) {

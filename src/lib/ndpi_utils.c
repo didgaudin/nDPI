@@ -21,12 +21,25 @@
  *
  */
 
-
+#ifndef __KERNEL__
 #include <stdlib.h>
 #include <errno.h>
 #include <math.h>
 #include <sys/types.h>
 
+#include <time.h>
+#ifndef WIN32
+#include <unistd.h>
+#endif
+
+#if defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__
+#include <sys/endian.h>
+#endif
+#else
+#include <asm/byteorder.h>
+#include <linux/types.h>
+#include <ndpi_kernel_compat.h>
+#endif
 
 #define NDPI_CURRENT_PROTO NDPI_PROTOCOL_UNKNOWN
 
@@ -38,21 +51,16 @@
 #include "ahocorasick.h"
 #include "libcache.h"
 
-#include <time.h>
-#ifndef WIN32
-#include <unistd.h>
-#endif
-
-#if defined __FreeBSD__ || defined __NetBSD__ || defined __OpenBSD__
-#include <sys/endian.h>
-#endif
 
 #include "third_party/include/ndpi_patricia.h"
+
+#ifndef __KERNEL__
 #include "third_party/include/libinjection.h"
 #include "third_party/include/libinjection_sqli.h"
 #include "third_party/include/libinjection_xss.h"
 #include "third_party/include/uthash.h"
 #include "third_party/include/rce_injection.h"
+#endif
 
 #define NDPI_CONST_GENERIC_PROTOCOL_NAME  "GenericProtocol"
 
@@ -69,6 +77,7 @@ struct pcre_struct {
 };
 #endif
 
+#ifndef __KERNEL__
 /*
  * Please keep this strcture in sync with
  * `struct ndpi_str_hash` in src/include/ndpi_typedefs.h
@@ -84,7 +93,7 @@ typedef struct ndpi_str_hash_private {
 _Static_assert(sizeof(struct ndpi_str_hash) == sizeof(struct ndpi_str_hash_private) - sizeof(UT_hash_handle),
                "Please keep `struct ndpi_str_hash` and `struct ndpi_str_hash_private` syncd.");
 #endif
-
+#endif
 /* ****************************************** */
 
 /* implementation of the punycode check function */
@@ -1053,6 +1062,7 @@ char* ndpi_base64_encode(unsigned char const* bytes_to_encode, size_t in_len) {
 
 /* ********************************** */
 
+#ifndef __KERNEL__
 void ndpi_serialize_risk(ndpi_serializer *serializer,
                          ndpi_risk risk) {
   u_int32_t i;
@@ -1141,8 +1151,11 @@ void ndpi_serialize_proto(struct ndpi_detection_module_struct *ndpi_struct,
     ndpi_serialize_string_string(serializer, "category", ndpi_category_get_name(ndpi_struct, l7_protocol.category));
   }
 }
+#endif
 
 /* ********************************** */
+
+#ifndef __KERNEL__
 
 static void ndpi_tls2json(ndpi_serializer *serializer, struct ndpi_flow_struct *flow)
 {
@@ -1877,13 +1890,17 @@ ndpi_risk_enum ndpi_validate_url(char *url) {
   return(rc);
 }
 
+#endif
 /* ******************************************************************** */
 
 u_int8_t ndpi_is_protocol_detected(struct ndpi_detection_module_struct *ndpi_str,
 				   ndpi_protocol proto) {
   if((proto.master_protocol != NDPI_PROTOCOL_UNKNOWN)
      || (proto.app_protocol != NDPI_PROTOCOL_UNKNOWN)
-     || (proto.category != NDPI_PROTOCOL_CATEGORY_UNSPECIFIED))
+#ifndef __KERNEL__
+     || (proto.category != NDPI_PROTOCOL_CATEGORY_UNSPECIFIED)
+#endif
+     )
     return(1);
   else
     return(0);
@@ -2050,9 +2067,6 @@ const char* ndpi_risk2str(ndpi_risk_enum risk) {
 
   case NDPI_MINOR_ISSUES:
     return("Minor Issues");
-    
-  case NDPI_TCP_ISSUES:
-    return("TCP Connection Issues");
     
   default:
     ndpi_snprintf(buf, sizeof(buf), "%d", (int)risk);
@@ -2233,7 +2247,7 @@ u_int32_t ndpi_quick_16_byte_hash(u_int8_t *in_16_bytes_long) {
 }
 
 /* ******************************************************************** */
-
+#ifndef __KERNEL__
 int ndpi_hash_init(ndpi_str_hash **h)
 {
   if (h == NULL)
@@ -2311,7 +2325,7 @@ int ndpi_hash_add_entry(ndpi_str_hash **h, char *key, u_int8_t key_len, void *va
   HASH_ADD_INT(*h_priv, hash, new);
   return 0;
 }
-
+#endif
 /* ********************************************************************************* */
 
 static u_int64_t ndpi_host_ip_risk_ptree_match(struct ndpi_detection_module_struct *ndpi_str,
@@ -2555,6 +2569,7 @@ int ndpi_is_valid_hostname(char * const str, size_t len) {
 
 /* ******************************************************************** */
 
+#ifndef __KERNEL__
 float ndpi_entropy(u_int8_t const * const buf, size_t len) {
   float entropy = 0.0f;
   u_int32_t byte_counters[256];
@@ -2577,6 +2592,7 @@ float ndpi_entropy(u_int8_t const * const buf, size_t len) {
 
   return entropy;
 }
+#endif
 
 /* ******************************************************************** */
 static inline uint16_t get_n16bit(uint8_t const * cbuf) {
@@ -2759,7 +2775,7 @@ int ndpi_vsnprintf(char * str, size_t size, char const * format, va_list va_args
 }
 
 /* ******************************************* */
-
+#ifndef __KERNEL__
 struct tm *ndpi_gmtime_r(const time_t *timep,
                          struct tm *result)
 {
@@ -2770,7 +2786,7 @@ struct tm *ndpi_gmtime_r(const time_t *timep,
   return gmtime_r(timep, result);
 #endif
 }
-
+#endif
 /* ******************************************* */
 
 int ndpi_snprintf(char * str, size_t size, char const * format, ...) {
@@ -2785,6 +2801,7 @@ int ndpi_snprintf(char * str, size_t size, char const * format, ...) {
 
 /* ******************************************* */
 
+#ifndef __KERNEL__
 char* ndpi_get_flow_risk_info(struct ndpi_flow_struct *flow,
 			      char *out, u_int out_len,
 			      u_int8_t use_json) {
@@ -2887,6 +2904,7 @@ u_int8_t ndpi_check_flow_risk_exceptions(struct ndpi_detection_module_struct *nd
   return(0);
 }
 
+#endif
 /* ******************************************* */
 
 int64_t ndpi_asn1_ber_decode_length(const unsigned char *payload, int payload_len, u_int16_t *value_len)

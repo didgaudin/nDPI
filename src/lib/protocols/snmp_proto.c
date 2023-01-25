@@ -54,9 +54,9 @@ static int ndpi_search_snmp_again(struct ndpi_detection_module_struct *ndpi_stru
 
 /* *************************************************************** */
 
-static void ndpi_search_snmp(struct ndpi_detection_module_struct *ndpi_struct,
-			     struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+void ndpi_search_snmp(struct ndpi_detection_module_struct *ndpi_struct,
+		      struct ndpi_flow_struct *flow) {
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int16_t snmp_port = htons(161), trap_port = htons(162);
 
   if((packet->udp->source != snmp_port) &&

@@ -29,7 +29,7 @@
 static void ndpi_check_lotus_notes(struct ndpi_detection_module_struct *ndpi_struct, 
 				   struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int32_t payload_len = packet->payload_packet_len;
 
   flow->l4.tcp.lotus_notes_packet_id++;
@@ -51,7 +51,7 @@ static void ndpi_check_lotus_notes(struct ndpi_detection_module_struct *ndpi_str
   NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
 }
 
-static void ndpi_search_lotus_notes(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_lotus_notes(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
   NDPI_LOG_DBG(ndpi_struct, "search lotus_notes\n");
 

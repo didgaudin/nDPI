@@ -56,6 +56,8 @@
 
 #define addroute make_and_lookup
 
+#ifndef __KERNEL__
+
 #include <sys/types.h> /* for u_* definitions (on FreeBSD 5) */
 #include <errno.h> /* for EAFNOSUPPORT */
 
@@ -76,6 +78,15 @@
 #include <ws2tcpip.h> /* IPv6 */
 #endif
 
+#else
+#include <asm/byteorder.h>
+#include <linux/in.h>
+#include <linux/in6.h>
+#include <asm/errno.h>
+#define assert(A)
+//WARN_ON(A)
+#endif
+
 /* { from mrt.h */
 
 typedef struct _prefix4_t {
@@ -87,6 +98,24 @@ typedef struct _prefix4_t {
 
 /* } */
 
+
+typedef void (*void_fn_t)(void *data);
+typedef void (*void_fn2_t)(ndpi_prefix_t *prefix, void *data);
+
+/* renamed to ndpi_Patricia to avoid name conflicts */
+ndpi_patricia_node_t *ndpi_patricia_search_exact (ndpi_patricia_tree_t *patricia, ndpi_prefix_t *prefix);
+ndpi_patricia_node_t *ndpi_patricia_search_best (ndpi_patricia_tree_t *patricia, ndpi_prefix_t *prefix);
+ndpi_patricia_node_t * ndpi_patricia_search_best2 (ndpi_patricia_tree_t *patricia, ndpi_prefix_t *prefix,
+					      int inclusive);
+ndpi_patricia_node_t *ndpi_patricia_lookup (ndpi_patricia_tree_t *patricia, ndpi_prefix_t *prefix);
+void ndpi_patricia_remove (ndpi_patricia_tree_t *patricia, ndpi_patricia_node_t *node);
+// ndpi_patricia_tree_t *ndpi_New_Patricia (u_int16_t maxbits);
+void ndpi_Clear_Patricia (ndpi_patricia_tree_t *patricia, void_fn_t func);
+void ndpi_Destroy_Patricia (ndpi_patricia_tree_t *patricia, void_fn_t func);
+void ndpi_patricia_process (ndpi_patricia_tree_t *patricia, void_fn2_t func);
+ndpi_prefix_t *ndpi_ascii2prefix (int family, char *string);
+ndpi_prefix_t *ndpi_Ref_Prefix (ndpi_prefix_t * prefix);
+void ndpi_Deref_Prefix (ndpi_prefix_t * prefix);
 
 #ifdef WIN32
 #define PATRICIA_MAXBITS	128

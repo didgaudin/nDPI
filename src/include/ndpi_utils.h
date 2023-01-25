@@ -26,7 +26,18 @@
 
 #include "ndpi_define.h"
 
+#define MYDBG(m, ...) \
+	printf(" DBG[%s:%s:%u]: \t" m "\n", __FILE__, __FUNCTION__, __LINE__, ##__VA_ARGS__);
+
+// #define NDPI_ENABLE_DEBUG_POINTER_MESSAGES
+// #define NDPI_ENABLE_DEBUG_INFO_MESSAGES
+// #define NDPI_ENABLE_DEBUG_TRACE_MESSAGES
+
 #ifndef NDPI_CFFI_PREPROCESSING
+extern void printRawData(const uint8_t *ptr, size_t len);
+//extern uint8_t add_segment_to_buffer( struct ndpi_flow_struct *flow, struct ndpi_tcphdr const * tcph, uint32_t waited);
+//extern uint8_t check_for_sequence( struct ndpi_flow_struct *flow, struct ndpi_tcphdr const * tcph);
+
 extern u_int8_t ndpi_ends_with(char *str, char *ends);
 #endif // NDPI_CFFI_PREPROCESSING
 /* **************************************** */
@@ -46,8 +57,10 @@ extern u_int8_t ndpi_ends_with(char *str, char *ends);
 #ifndef NDPI_CFFI_PREPROCESSING
 int ndpi_vsnprintf(char * str, size_t size, char const * format, va_list va_args);
 int ndpi_snprintf(char * str, size_t size, char const * format, ...);
+#ifndef __KERNEL__
 struct tm *ndpi_gmtime_r(const time_t *timep,
                          struct tm *result);
+#endif
 #endif
 
 #endif

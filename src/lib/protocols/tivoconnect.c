@@ -38,7 +38,7 @@ static void ndpi_int_tivoconnect_add_connection(struct ndpi_detection_module_str
 static void dissect_tivoconnect_data(struct ndpi_detection_module_struct *ndpi_struct,
                                      struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct const * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   char const * const payload = (char const *)packet->payload;
   size_t const payload_len = packet->payload_packet_len;
   char const *key = payload;
@@ -112,10 +112,10 @@ static void dissect_tivoconnect_data(struct ndpi_detection_module_struct *ndpi_s
   }
 }
 
-static void ndpi_search_tivoconnect(struct ndpi_detection_module_struct *ndpi_struct,
-                                    struct ndpi_flow_struct *flow)
+void ndpi_search_tivoconnect(struct ndpi_detection_module_struct *ndpi_struct,
+                             struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct const * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   NDPI_LOG_INFO(ndpi_struct, "search tivoconnect\n");
 

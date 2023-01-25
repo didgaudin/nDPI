@@ -586,7 +586,7 @@ static int ndpi_ftp_control_check_response(struct ndpi_flow_struct *flow,
 
 static void ndpi_check_ftp_control(struct ndpi_detection_module_struct *ndpi_struct,
 				   struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int32_t payload_len = packet->payload_packet_len;
 
   /* Check connection over TCP */
@@ -668,8 +668,8 @@ static void ndpi_check_ftp_control(struct ndpi_detection_module_struct *ndpi_str
 
 /* *************************************************************** */
 
-static void ndpi_search_ftp_control(struct ndpi_detection_module_struct *ndpi_struct,
-				    struct ndpi_flow_struct *flow) {
+void ndpi_search_ftp_control(struct ndpi_detection_module_struct *ndpi_struct,
+			     struct ndpi_flow_struct *flow) {
   NDPI_LOG_DBG(ndpi_struct, "search FTP_CONTROL\n");
 
   /* skip marked packets */

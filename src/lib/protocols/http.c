@@ -21,8 +21,6 @@
  *
  */
 
-#include <assert.h>
-
 #include "ndpi_protocol_ids.h"
 
 #define NDPI_CURRENT_PROTO NDPI_PROTOCOL_HTTP
@@ -165,7 +163,7 @@ static void ndpi_http_check_human_redeable_content(struct ndpi_detection_module_
 
 static void ndpi_validate_http_content(struct ndpi_detection_module_struct *ndpi_struct,
 				       struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   const u_int8_t *double_ret = (const u_int8_t *)ndpi_strnstr((const char *)packet->payload, "\r\n\r\n", packet->payload_packet_len);
 
   NDPI_LOG_DBG(ndpi_struct, "==>>> [len: %u] ", packet->payload_packet_len);
@@ -220,7 +218,7 @@ static void ndpi_validate_http_content(struct ndpi_detection_module_struct *ndpi
 /* https://www.freeformatter.com/mime-types-list.html */
 static ndpi_protocol_category_t ndpi_http_check_content(struct ndpi_detection_module_struct *ndpi_struct,
 							struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   if(packet->content_line.len > 0) {
     u_int app_len = sizeof("application");
@@ -404,18 +402,19 @@ static void ndpi_http_parse_subprotocol(struct ndpi_detection_module_struct *ndp
   if((flow->l4.tcp.http_stage == 0) || (flow->http.url && flow->http_detected)) {
     char *double_col = strchr((char*)flow->host_server_name, ':');
     int a, b, c, d;
+    struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
     
     if(double_col) double_col[0] = '\0';
 
-    if(ndpi_struct->packet.iph
+    if(packet->iph
        && (sscanf(flow->host_server_name, "%d.%d.%d.%d", &a, &b, &c, &d) == 4)) {
       /* IPv4 */
 
-      if(ndpi_struct->packet.iph->daddr != inet_addr(flow->host_server_name)) {
+      if(packet->iph->daddr != inet_addr(flow->host_server_name)) {
 	char buf[64], msg[128];
 	
 	snprintf(msg, sizeof(msg), "Expected %s, found %s",
-		 ndpi_intoav4(ntohl(ndpi_struct->packet.iph->daddr), buf, sizeof(buf)), flow->host_server_name);
+		 ndpi_intoav4(ntohl(packet->iph->daddr), buf, sizeof(buf)), flow->host_server_name);
 	ndpi_set_risk(ndpi_struct, flow, NDPI_HTTP_SUSPICIOUS_HEADER, msg);
       }
     }
@@ -478,9 +477,8 @@ static void ndpi_check_user_agent(struct ndpi_detection_module_struct *ndpi_stru
     }
 
     if (i == ua_len) {
-      float upper_case_ratio = (float)upper_case_count / (float)ua_len;
-
-      if (upper_case_ratio >= 0.2f) {
+      int upper_case_ratio = upper_case_count*100 / ua_len;
+      if (upper_case_ratio >= 20) {
 	char str[64];
 
 	snprintf(str, sizeof(str), "UA %s", ua);
@@ -620,20 +618,26 @@ int http_process_user_agent(struct ndpi_detection_module_struct *ndpi_struct,
 static void ndpi_check_numeric_ip(struct ndpi_detection_module_struct *ndpi_struct,
 				  struct ndpi_flow_struct *flow,
 				  char *ip, u_int ip_len) {
-  char buf[22], *double_dot;
-  struct in_addr ip_addr;
-
-  strncpy(buf, ip, ip_len);
-  buf[ip_len] = '\0';
-
-  if((double_dot = strchr(buf, ':')) != NULL)
-    double_dot[0] = '\0';
-
-  ip_addr.s_addr = inet_addr(buf);
-  if(strcmp(inet_ntoa(ip_addr), buf) == 0) {
+  char *s,*e;
+  int a,i;
+  s = ip;
+  e = s + ip_len;
+  if(*s < '0' || *s > '9') return;
+  for(a = 0, i=0; s < e && *s && *s != ':'; s++) {
+	if(*s == '.') {
+		if(a < 0 || a > 255 || i > 3) return;
+		a = 0; i++;
+		continue;
+	}
+	if(*s < '0' || *s > '9') return;
+	a *= 10;
+	a += *s - '0';
+  }
+  if(a < 0 || a > 255 || i != 3) return;
+  {
     char str[64];
 
-    snprintf(str, sizeof(str), "Found host %s", buf);
+    snprintf(str, sizeof(str), "Found host %.*s", (int)(s-ip), ip);
     ndpi_set_risk(ndpi_struct, flow, NDPI_HTTP_NUMERIC_IP_HOST, str);
   }
 }
@@ -698,7 +702,7 @@ static void ndpi_check_http_server(struct ndpi_detection_module_struct *ndpi_str
 */
 static void check_content_type_and_change_protocol(struct ndpi_detection_module_struct *ndpi_struct,
 						   struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   int ret;
 
   if(flow->http_detected && (flow->http.response_status_code != 0))
@@ -971,7 +975,7 @@ static const char *http_fs = "CDGHOPR";
 
 static u_int16_t http_request_url_offset(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   unsigned int i;
 
   NDPI_LOG_DBG2(ndpi_struct, "====>>>> HTTP: %c%c%c%c [len: %u]\n",
@@ -1042,7 +1046,7 @@ static int is_a_suspicious_header(const char* suspicious_headers[], struct ndpi_
 static void ndpi_check_http_header(struct ndpi_detection_module_struct *ndpi_struct,
 				   struct ndpi_flow_struct *flow) {
   u_int32_t i;
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   for(i=0; (i < packet->parsed_lines)
 	&& (packet->line[i].ptr != NULL)
@@ -1138,7 +1142,7 @@ static void ndpi_check_http_header(struct ndpi_detection_module_struct *ndpi_str
 
 static void ndpi_check_http_tcp(struct ndpi_detection_module_struct *ndpi_struct,
 				struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int16_t filename_start; /* the filename in the request method line, e.g., "GET filename_start..."*/
 
   packet->packet_lines_parsed_complete = 0;

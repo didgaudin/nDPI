@@ -59,7 +59,7 @@ static int ndpi_int_match_whatsapp_sequence(struct ndpi_detection_module_struct 
                                             struct ndpi_flow_struct * flow,
                                             enum whatsapp_sequence_id seq_id)
 {
-  struct ndpi_packet_struct const * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   if (flow->l4.tcp.wa_matched_so_far < GET_SEQ_SIZE(seq_id))
   {
@@ -84,9 +84,9 @@ static int ndpi_int_match_whatsapp_sequence(struct ndpi_detection_module_struct 
   return 1;
 }
 
-static void ndpi_search_whatsapp(struct ndpi_detection_module_struct *ndpi_struct,
-				 struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+void ndpi_search_whatsapp(struct ndpi_detection_module_struct *ndpi_struct,
+			  struct ndpi_flow_struct *flow) {
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   NDPI_LOG_DBG(ndpi_struct, "search WhatsApp\n");
 

@@ -37,8 +37,8 @@
   }
 
 
-static void ndpi_search_in_non_tcp_udp(struct ndpi_detection_module_struct
-				       *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_in_non_tcp_udp(struct ndpi_detection_module_struct
+				*ndpi_struct, struct ndpi_flow_struct *flow)
 {
   switch (flow->l4_proto) {
   case NDPI_IPSEC_PROTOCOL_ESP:

@@ -25,11 +25,6 @@
 #include "ndpi_api.h"
 
 
-#ifdef WIN32
-extern int gettimeofday(struct timeval * tp, struct timezone * tzp);
-#endif
-#define do_gettimeofday(a) gettimeofday(a, NULL)
-
 struct flow_ver1_rec {
   u_int32_t srcaddr;    /* Source IP Address */
   u_int32_t dstaddr;    /* Destination IP Address */
@@ -97,13 +92,13 @@ struct flow_ver7_rec {
   u_int32_t router_sc;  /* Router which is shortcut by switch */
 };
 
-static void ndpi_search_netflow(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_netflow(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   // const u_int8_t *packet_payload = packet->payload;
   u_int32_t payload_len = packet->payload_packet_len;
-  time_t now;
-  struct timeval now_tv;
+  time64_t now;
+  struct timespec64 now_tv;
 
   NDPI_LOG_DBG(ndpi_struct, "search netflow\n");
 
@@ -168,9 +163,10 @@ static void ndpi_search_netflow(struct ndpi_detection_module_struct *ndpi_struct
     _when = (u_int32_t*)&packet->payload[uptime_offset]; /* Sysuptime */
     when = ntohl(*_when);
 
-    do_gettimeofday(&now_tv);
+    gettimeofday64(&now_tv,NULL);
     now = now_tv.tv_sec;
 
+    /* BUG AFTER YEAR 2105: 'when' is 32bit */
     if(((version == 1) && (when == 0))
        || ((when >= 946684800 /* 1/1/2000 */) && (when <= (u_int32_t)now))) {
       NDPI_LOG_INFO(ndpi_struct, "found netflow\n");

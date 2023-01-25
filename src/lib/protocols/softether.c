@@ -288,9 +288,9 @@ static int dissect_softether_ip_port(struct ndpi_flow_struct *flow,
 
 /* ***************************************************** */
 
-static void ndpi_search_softether(struct ndpi_detection_module_struct *ndpi_struct,
-                                  struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct const * const packet = &ndpi_struct->packet;
+void ndpi_search_softether(struct ndpi_detection_module_struct *ndpi_struct,
+                           struct ndpi_flow_struct *flow) {
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   NDPI_LOG_DBG(ndpi_struct, "search softether\n");
 
@@ -323,8 +323,10 @@ static void ndpi_search_softether(struct ndpi_detection_module_struct *ndpi_stru
   
 static int ndpi_search_softether_again(struct ndpi_detection_module_struct *ndpi_struct,
 				       struct ndpi_flow_struct *flow) {
-  if((dissect_softether_ip_port(flow, &ndpi_struct->packet) == 0)
-     || (dissect_softether_host_fqdn(flow, &ndpi_struct->packet) == 0)) {
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
+
+  if((dissect_softether_ip_port(flow, packet) == 0)
+     || (dissect_softether_host_fqdn(flow, packet) == 0)) {
     if((flow->protos.softether.ip[0] != '\0')
        && (flow->protos.softether.port[0] != '\0')
        && (flow->protos.softether.hostname[0] != '\0')

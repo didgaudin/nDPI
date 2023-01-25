@@ -67,7 +67,7 @@ static int is_apple_push_addr(const struct ndpi_packet_struct *packet)
 
 static void ndpi_check_apple_push(struct ndpi_detection_module_struct *ndpi_struct,
 				  struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   /* https://support.apple.com/en-us/HT203609 */
   if(is_apple_push_addr(packet)) {
@@ -85,7 +85,7 @@ static void ndpi_check_apple_push(struct ndpi_detection_module_struct *ndpi_stru
   NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
 }
 
-static void ndpi_search_apple_push(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_apple_push(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
   NDPI_LOG_DBG(ndpi_struct, "search apple_push\n");
 

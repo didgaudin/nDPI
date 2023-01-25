@@ -29,7 +29,9 @@
 #include "ndpi_api.h"
 #include "ndpi_md5.h"
 
+#ifndef __KERNEL__
 #include <string.h>
+#endif
 
 /*
   HASSH - https://github.com/salesforce/hassh
@@ -71,9 +73,6 @@ static void ssh_analyze_signature_version(struct ndpi_detection_module_struct *n
 					  struct ndpi_flow_struct *flow,
 					  char *str_to_check,
 					  u_int8_t is_client_signature) {
-
-  if(str_to_check == NULL) return;
-  
   u_int i;
   u_int8_t obsolete_ssh_version = 0;  
   const ssh_pattern ssh_servers_strings[] =
@@ -85,6 +84,8 @@ static void ssh_analyze_signature_version(struct ndpi_detection_module_struct *n
      { (const char*)"SSH-%*f-dropbear_%d.%d", 2020, 0, 0 },    /* Dropbear SSH */
      { NULL, 0, 0, 0 } 
     };
+
+  if(str_to_check == NULL) return;
 
   for(i = 0; ssh_servers_strings[i].signature != NULL; i++) {
     int matches;
@@ -401,7 +402,7 @@ static void ndpi_ssh_zap_cr(char *str, int len) {
 /* ************************************************************************ */
 
 static void ndpi_search_ssh_tcp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
 #ifdef SSH_DEBUG
   printf("[SSH] %s()\n", __FUNCTION__);

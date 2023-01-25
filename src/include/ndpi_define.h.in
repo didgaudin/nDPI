@@ -33,6 +33,21 @@
   gcc -E -dM - < /dev/null |grep ENDIAN
 */
 
+#ifdef __KERNEL__
+
+#define        LITTLE_ENDIAN   1234    /* least-significant byte first (vax, pc) */
+#define        BIG_ENDIAN      4321    /* most-significant byte first (IBM, net) */
+
+#ifdef __LITTLE_ENDIAN
+#define BYTE_ORDER __LITTLE_ENDIAN
+#endif
+#ifdef __BIG_ENDIAN
+#define BYTE_ORDER __BIG_ENDIAN
+#endif
+#define __BYTE_ORDER BYTE_ORDER
+
+#else
+
 #if defined(__FreeBSD__) || defined(__NetBSD__)
 #include <sys/endian.h>
 #endif
@@ -48,6 +63,7 @@
 #define __BIG_ENDIAN__
 #endif/* BYTE_ORDER */
 #endif/* __OPENBSD__ */
+#endif/* __KERNEL__ */
 
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
@@ -243,8 +259,8 @@
 #define NDPI_COMPARE_IPV6_ADDRESS_STRUCTS(x,y)  \
   ((x.u6_addr.u6_addr64[0] < y.u6_addr.u6_addr64[0]) || ((x.u6_addr.u6_addr64[0] == y.u6_addr.u6_addr64[0]) && (x.u6_addr.u6_addr64[1] < y.u6_addr.u6_addr64[1])))
 
-#define NDPI_NUM_BITS              512
-#define NDPI_NUM_BITS_MASK         (512-1)
+#define NDPI_NUM_BITS              1024
+#define NDPI_NUM_BITS_MASK         (1024-1)
 
 #define NDPI_BITS /* 32 */ (sizeof(ndpi_ndpi_mask) * 8 /* number of bits in a byte */)        /* bits per mask */
 #define howmanybits(x, y)   (((x)+((y)-1))/(y))

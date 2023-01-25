@@ -58,7 +58,7 @@ static void set_websocket_detected(struct ndpi_detection_module_struct *ndpi_str
 
 static void ndpi_check_websocket(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+    struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   if (packet->payload_packet_len < sizeof(u_int16_t))
     {
@@ -93,7 +93,7 @@ static void ndpi_check_websocket(struct ndpi_detection_module_struct *ndpi_struc
   }
 }
 
-static void ndpi_search_websocket(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_websocket(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
   // Break after 6 packets.
   if (flow->packet_counter > 10)

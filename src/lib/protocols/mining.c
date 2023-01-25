@@ -51,7 +51,7 @@ static void cacheMiningHostTwins(struct ndpi_detection_module_struct *ndpi_struc
 
 static void ndpi_search_mining_udp(struct ndpi_detection_module_struct *ndpi_struct,
 				   struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int16_t source = ntohs(packet->udp->source);
   u_int16_t dest = ntohs(packet->udp->dest);
 
@@ -92,7 +92,7 @@ static u_int8_t isEthPort(u_int16_t dport) {
 
 static void ndpi_search_mining_tcp(struct ndpi_detection_module_struct *ndpi_struct,
 				   struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   NDPI_LOG_DBG(ndpi_struct, "search MINING TCP\n");
 
@@ -172,9 +172,9 @@ static void ndpi_search_mining_tcp(struct ndpi_detection_module_struct *ndpi_str
 
 /* ************************************************************************** */
 
-static void ndpi_search_mining(struct ndpi_detection_module_struct *ndpi_struct,
-			       struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+void ndpi_search_mining(struct ndpi_detection_module_struct *ndpi_struct,
+			struct ndpi_flow_struct *flow) {
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   if(packet->tcp)
     return ndpi_search_mining_tcp(ndpi_struct, flow);

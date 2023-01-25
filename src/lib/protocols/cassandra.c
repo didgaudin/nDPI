@@ -20,7 +20,6 @@
  * along with nDPI.  If not, see <http://www.gnu.org/licenses/>.
  */
 
-#include <stdbool.h>
 #include "ndpi_protocol_ids.h"
 #define NDPI_CURRENT_PROTO NDPI_PROTOCOL_CASSANDRA
 #include "ndpi_api.h"
@@ -105,10 +104,10 @@ static bool ndpi_check_valid_cassandra_flags(uint8_t flags)
   return (flags & 0xF0) == 0;
 }
 
-static void ndpi_search_cassandra(struct ndpi_detection_module_struct *ndpi_struct,
-                                  struct ndpi_flow_struct *flow)
+void ndpi_search_cassandra(struct ndpi_detection_module_struct *ndpi_struct,
+                           struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   NDPI_LOG_DBG(ndpi_struct, "search Cassandra\n");
 

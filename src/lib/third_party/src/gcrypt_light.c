@@ -1,18 +1,27 @@
-
+#ifndef __KERNEL__
 #include <stdint.h>
 #if !defined(WIN32) && !defined(_MSC_VER)
 #include <unistd.h>
 #endif
 #include <string.h>
 #include <stdlib.h>
+#else
+#include <asm/byteorder.h>
+#include <linux/kernel.h>
+#include <linux/types.h>
+#endif
 
 #include "ndpi_api.h"
+
+#if !defined(HAVE_LIBGCRYPT) || defined(__KERNEL__)
 
 #if defined(__GNUC__) &&  \
         ( defined(__amd64__) || defined(__x86_64__) )   &&  \
     ! defined(MBEDTLS_HAVE_X86_64)
 #define MBEDTLS_HAVE_X86_64
+#ifndef __KERNEL__
 #define MBEDTLS_AESNI_C
+#endif
 #endif
 
 /****************************/
@@ -103,9 +112,7 @@ char *gpg_strerror_r(gcry_error_t err,char *buf, size_t buflen) {
 }
 
 int gcry_control (int ctl,int val) {
-    if(ctl == GCRYCTL_INITIALIZATION_FINISHED ||
-       (ctl == 1 && val == 0) /* GCRYCTL_INITIALIZATION_FINISHED_P */)
-        return GPG_ERR_NO_ERROR;
+    if(ctl == GCRYCTL_INITIALIZATION_FINISHED) return GPG_ERR_NO_ERROR;
     return MBEDTLS_ERR_NOT_SUPPORT;
 }
 
@@ -268,7 +275,7 @@ gcry_error_t gcry_cipher_setiv (gcry_cipher_hd_t h, const void *iv, size_t ivlen
     if(h->s_iv) return MBEDTLS_ERR_CIPHER_BAD_KEY;
     switch(h->mode) {
         case GCRY_CIPHER_MODE_GCM:
-            if(ivlen != 12) return MBEDTLS_ERR_CIPHER_BAD_KEY;
+            if(ivlen < 12 && ivlen > GCRY_AES_IV_SIZE) return MBEDTLS_ERR_CIPHER_BAD_KEY;
             h->s_iv = 1;
             h->ivlen = ivlen;
             memcpy( h->iv, iv, ivlen );
@@ -371,5 +378,5 @@ gcry_error_t gcry_cipher_decrypt (gcry_cipher_hd_t h,
                      const void *in, size_t inlen) {
     return _gcry_cipher_crypt(h,out,outsize,in,inlen,0);
 }
-
+#endif
 /* vim: set ts=4 sw=4 et: */

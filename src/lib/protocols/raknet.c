@@ -47,10 +47,10 @@ static size_t raknet_dissect_ip(struct ndpi_packet_struct * const packet, size_t
 }
 
 /* Reference: https://wiki.vg/Raknet_Protocol */
-static void ndpi_search_raknet(struct ndpi_detection_module_struct *ndpi_struct,
-                               struct ndpi_flow_struct *flow)
+void ndpi_search_raknet(struct ndpi_detection_module_struct *ndpi_struct,
+                        struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int8_t op, ip_addr_offset, required_packets = 3;
 
   NDPI_LOG_DBG(ndpi_struct, "search RakNet\n");

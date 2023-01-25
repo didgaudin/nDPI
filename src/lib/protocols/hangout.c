@@ -55,9 +55,9 @@ static u_int8_t isHangoutTCPPort(u_int16_t port) {
 
 /* ***************************************************************** */
 
-static void ndpi_search_hangout(struct ndpi_detection_module_struct *ndpi_struct,
-				struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct * packet = &ndpi_struct->packet;
+void ndpi_search_hangout(struct ndpi_detection_module_struct *ndpi_struct,
+			 struct ndpi_flow_struct *flow) {
+  struct ndpi_packet_struct * packet = ndpi_get_packet_struct(ndpi_struct);
 
   NDPI_LOG_DBG(ndpi_struct, "search Hangout\n");
 

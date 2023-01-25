@@ -23,19 +23,13 @@ SOFTWARE.
  *
  */
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 
 #ifndef __DESELMO_LIBCACHE_H__
 #define __DESELMO_LIBCACHE_H__
 
+#ifndef __KERNEL__
 #include <stdint.h>
-
-typedef struct cache_entry_ *cache_entry;
-
-typedef struct cache_entry_map_ *cache_entry_map;
+#endif
 
 /**
  * @brief Codes representing the result of some functions
@@ -52,16 +46,19 @@ typedef enum cache_result {
 
 
 typedef struct cache *cache_t;
-
+typedef int (*cache_item_compare)(const void *item1, size_t item1_size,
+                                  const void *item2, size_t item2_size);
+typedef uint32_t (*cache_item_hash)(const void *item, size_t item_size);
 
 /**
  * @brief Returns a new cache_t
  * 
  * @par    cache_max_size  = max number of item that the new cache_t can contain
+ * @par    cache_hash_size = size of hash table. May be 0
  * @return a new cache_t, or NULL if an error occurred
  *
  */
-cache_t cache_new(uint32_t cache_max_size);
+cache_t cache_new(uint32_t cache_max_size, uint32_t cache_hash_size);
 
 
 /**
@@ -73,7 +70,7 @@ cache_t cache_new(uint32_t cache_max_size);
  * @return a code representing the result of the function
  *
  */
-cache_result cache_add(cache_t cache, void *item, uint32_t item_size);
+cache_result cache_add(cache_t cache, void *item, size_t item_size);
 
 
 /**
@@ -82,10 +79,10 @@ cache_result cache_add(cache_t cache, void *item, uint32_t item_size);
  * @par    cache      = the cache_t
  * @par    item       = pointer to the item to check
  * @par    item_size  = size of the item
- * @return a code representing the result of the function
+ * @return a pointer to found item
  *
  */
-cache_result cache_contains(cache_t cache, void *item, uint32_t item_size);
+void *cache_contains(cache_t cache, void *item, size_t item_size);
 
 
 /**
@@ -97,7 +94,7 @@ cache_result cache_contains(cache_t cache, void *item, uint32_t item_size);
  * @return a code representing the result of the function
  *
  */
-cache_result cache_remove(cache_t cache, void *item, uint32_t item_size);
+cache_result cache_remove(cache_t cache, void *item, size_t item_size);
 
 /**
  * @brief Free the specified cache_t
@@ -107,11 +104,8 @@ cache_result cache_remove(cache_t cache, void *item, uint32_t item_size);
  */
 void cache_free(cache_t cache);
 
-cache_entry cache_entry_new(void);
-cache_entry_map cache_entry_map_new(void);
-
+#ifndef __KERNEL__
+void cache_dump(cache_t cache);
 #endif
 
-#ifdef __cplusplus
-}
 #endif

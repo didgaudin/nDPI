@@ -118,9 +118,9 @@ static void get_credentials_auth_plain(struct ndpi_detection_module_struct *ndpi
 
 /* **************************************** */
 
-static void ndpi_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_struct,
-				      struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+void ndpi_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_struct,
+			       struct ndpi_flow_struct *flow) {
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   NDPI_LOG_DBG(ndpi_struct, "search mail_smtp\n");
 
@@ -406,8 +406,8 @@ static void ndpi_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_
 int ndpi_extra_search_mail_smtp_tcp(struct ndpi_detection_module_struct *ndpi_struct,
 				    struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct * const packet = &ndpi_struct->packet;
-  int rc;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
+  int rc = 0;
 
   if(flow->l4.tcp.smtp_command_bitmask & SMTP_BIT_STARTTLS) {
 

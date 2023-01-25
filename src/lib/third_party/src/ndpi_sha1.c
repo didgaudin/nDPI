@@ -21,15 +21,20 @@ A million repetitions of "a"
 
 #define SHA1HANDSOFF
 
+#ifndef __KERNEL__
 #include <stdio.h>
 #include <string.h>
 #include <sys/types.h>	/* for u_int*_t */
 #if defined(__sun)
 #include "solarisfixes.h"
 #endif
+#else
+#include <asm/byteorder.h>
+#include <linux/types.h>
+#endif
+
 #include "ndpi_main.h"
 #include "ndpi_sha1.h"
-#include "../include/secure_memzero.h"
 
 #ifdef WIN32
 #define BYTE_ORDER LITTLE_ENDIAN 
@@ -42,6 +47,7 @@ A million repetitions of "a"
 #if defined(linux) || defined(__linux__)
 # include <endian.h>
 #else
+
 #define	LITTLE_ENDIAN	1234	/* least-significant byte first (vax, pc) */
 #define	BIG_ENDIAN	4321	/* most-significant byte first (IBM, net) */
 #define	PDP_ENDIAN	3412	/* LSB first in word, MSW first in long (pdp)*/
@@ -165,7 +171,7 @@ CHAR64LONG16* block = (const CHAR64LONG16*)buffer;
     /* Wipe variables */
     a = b = c = d = e = 0;
 #ifdef SHA1HANDSOFF
-    secure_memzero(block, sizeof(block));
+    memset(block, 0, sizeof(block));
 #endif
 }
 

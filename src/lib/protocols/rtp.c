@@ -169,10 +169,11 @@ static u_int8_t isZoom(u_int16_t sport, u_int16_t dport,
 static void ndpi_rtp_search(struct ndpi_detection_module_struct *ndpi_struct,
 			    struct ndpi_flow_struct *flow,
 			    u_int8_t * payload, u_int16_t payload_len) {
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int8_t payloadType, payload_type;
-  u_int16_t s_port = ntohs(ndpi_struct->packet.udp->source), d_port = ntohs(ndpi_struct->packet.udp->dest), payload_offset;
+  u_int16_t s_port = ntohs(packet->udp->source), d_port = ntohs(packet->udp->dest), payload_offset;
   u_int8_t is_rtp, zoom_stream_type;
-
+  
   NDPI_LOG_DBG(ndpi_struct, "search RTP\n");
 
   if((payload_len < 2)
@@ -223,6 +224,17 @@ static void ndpi_rtp_search(struct ndpi_detection_module_struct *ndpi_struct,
 
   payload_type = payload[1] & 0x7F;
 
+  /* Check UDT(UDP) handshake - Protocol Citrix */
+  if (  payload[0] == 0x80 && payload_len >52  && ( ( ( htonl( *((u_int32_t*)(payload+48) ))) == (packet->iph)->saddr ) || ( htonl( *((u_int32_t*)(payload+48))) == (packet->iph)->daddr ) ) )  {
+    NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
+    return;
+  }
+ /*test UDT DATA  Seq or ACK */
+  else if( (  ( *(u_int16_t*)payload == 0x0280 ) &&  !( *(u_int16_t*)payload == 0x0680 )) || (  !( *(u_int16_t*)payload == 0x0280 ) &&  ( *(u_int16_t*)payload == 0x0680 )) ) {
+    NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
+    return;
+  }
+
   /* Check whether this is an RTP flow */
   if((payload_len >= 12)
      && (((payload[0] & 0xFF) == 0x80)
@@ -265,7 +277,7 @@ static void ndpi_rtp_search(struct ndpi_detection_module_struct *ndpi_struct,
 
 static void ndpi_search_rtp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int16_t source = ntohs(packet->udp->source);
   u_int16_t dest = ntohs(packet->udp->dest);
 

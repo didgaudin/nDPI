@@ -49,7 +49,7 @@ static void ndpi_int_jabber_add_connection(struct ndpi_detection_module_struct *
 static void check_content_type_and_change_protocol(struct ndpi_detection_module_struct *ndpi_struct,
 						   struct ndpi_flow_struct *flow, u_int16_t x)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   int i, left = packet->payload_packet_len-x;
 
   if(left <= 0) return;
@@ -62,9 +62,9 @@ static void check_content_type_and_change_protocol(struct ndpi_detection_module_
   }  
 }
 
-static void ndpi_search_jabber_tcp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
+void ndpi_search_jabber_tcp(struct ndpi_detection_module_struct *ndpi_struct, struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int16_t const max_packets = 4;
   size_t i;
   static uint8_t const valid_patterns[] = { 0x25, 0x26, 0x30 };

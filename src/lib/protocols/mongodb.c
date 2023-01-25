@@ -63,7 +63,7 @@ static void set_mongodb_detected(struct ndpi_detection_module_struct *ndpi_struc
 static void ndpi_check_mongodb(struct ndpi_detection_module_struct *ndpi_struct,
 			       struct ndpi_flow_struct *flow) {
   struct mongo_message_header mongodb_hdr;
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   uint32_t responseFlags;
 
   if (packet->payload_packet_len <= sizeof(mongodb_hdr)) {
@@ -119,8 +119,8 @@ static void ndpi_check_mongodb(struct ndpi_detection_module_struct *ndpi_struct,
   }
 }
 
-static void ndpi_search_mongodb(struct ndpi_detection_module_struct *ndpi_struct,
-				struct ndpi_flow_struct *flow)
+void ndpi_search_mongodb(struct ndpi_detection_module_struct *ndpi_struct,
+			 struct ndpi_flow_struct *flow)
 {
   // Break after 6 packets.
   if(flow->packet_counter > 6) {

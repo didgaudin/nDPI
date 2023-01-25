@@ -30,7 +30,7 @@
 static void ndpi_search_tailscale(struct ndpi_detection_module_struct *ndpi_struct,
 				  struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   unsigned char magic[6] = { 0x54, 0x53, 0xf0, 0x9f, 0x92, 0xac };
   unsigned short port = 41641;
 

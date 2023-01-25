@@ -29,7 +29,7 @@
 
 static void ndpi_check_amazon_video(struct ndpi_detection_module_struct *ndpi_struct,
 				    struct ndpi_flow_struct *flow) {
-  struct ndpi_packet_struct *packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
 
   NDPI_LOG_DBG(ndpi_struct, "search Amazon Prime\n");
 
@@ -56,7 +56,7 @@ static void ndpi_check_amazon_video(struct ndpi_detection_module_struct *ndpi_st
   NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
 }
 
-static void ndpi_search_amazon_video(struct ndpi_detection_module_struct *ndpi_struct,
+void ndpi_search_amazon_video(struct ndpi_detection_module_struct *ndpi_struct,
 			      struct ndpi_flow_struct *flow) {
   NDPI_LOG_DBG(ndpi_struct, "search amazon_video\n");
 

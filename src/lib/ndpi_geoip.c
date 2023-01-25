@@ -21,6 +21,11 @@
  *
  */
 
+#ifdef HAVE_CONFIG_H
+#include "ndpi_config.h"
+#endif
+
+#ifndef __KERNEL__
 #include <stdlib.h>
 #include <errno.h>
 #include <sys/types.h>
@@ -161,3 +166,4 @@ int ndpi_get_geoip_country_continent(struct ndpi_detection_module_struct *ndpi_s
 
   return(-2);
 }
+#endif

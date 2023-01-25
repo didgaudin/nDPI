@@ -127,10 +127,10 @@ static int ndpi_int_collectd_dissect_username(struct ndpi_flow_struct * const fl
   return 0;
 }
 
-static void ndpi_search_collectd(struct ndpi_detection_module_struct *ndpi_struct,
-                                 struct ndpi_flow_struct *flow)
+void ndpi_search_collectd(struct ndpi_detection_module_struct *ndpi_struct,
+                          struct ndpi_flow_struct *flow)
 {
-  struct ndpi_packet_struct const * const packet = &ndpi_struct->packet;
+  struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_struct);
   u_int16_t num_blocks;
   u_int16_t block_offset = 0, block_type, block_length;
   u_int16_t hostname_offset, hostname_length = 0;
