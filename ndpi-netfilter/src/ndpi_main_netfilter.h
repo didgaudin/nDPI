@@ -214,8 +214,6 @@ const char *acerr2txt(AC_ERROR_t r);
 int str_coll_to_automata(struct ndpi_detection_module_struct *ndpi_str,
 		void *host_ac,hosts_str_t *hosts);
 
-void set_debug_trace( struct ndpi_net *n);
-
 struct DNS_Entry {
         u_int32_t addr;
         time64_t ttl;

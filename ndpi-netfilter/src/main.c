@@ -415,45 +415,6 @@ unsigned long
 	       ndpi_pudf=0,ndpi_pudr=0,
 	       ndpi_puo=0;
 
-#ifdef NDPI_ENABLE_DEBUG_MESSAGE
-struct dbg_ipt_names {
-	uint32_t mask;
-	const char *name;
-};
-
-static struct dbg_ipt_names dbg_ipt_names [] = {
-	{1 << DBG_TRACE_CT,"ct_start"},
-	{1 << DBG_TRACE_PKT,"packet"},
-	{1 << DBG_TRACE_NAT,"nat"},
-	{1 << DBG_TRACE_CNT,"counters"},
-	{1 << DBG_TRACE_FLOW_MEM,"ct_mem"},
-	{1 << DBG_TRACE_HOSTNM,"hostname"},
-	{1 << DBG_TRACE_TLS,"tls"},
-	{1 << DBG_TRACE_JA3,"ja3"},
-	{1 << DBG_TRACE_JA3MATCH,"ja3_match"},
-	{1 << DBG_TRACE_EXCLUDE,"exclude"},
-	{1 << DBG_TRACE_MATCH,"ipt_match"},
-	{1 << DBG_TRACE_MATCH2,"ipt_match2"},
-	{1 << DBG_TRACE_CACHE,"ct_cache"},
-	{1 << DBG_TRACE_GUESSED,"guessed"},
-	{1 << DBG_TRACE_DDONE,"dpi_done"},
-	{1 << DBG_TRACE_DPI,"dpi"},
-	{1 << DBG_TRACE_RE,"regex"},
-	{1 << DBG_TRACE_TG1,"tgt_notmagic"},
-	{1 << DBG_TRACE_TG2,"tgt_start"},
-	{1 << DBG_TRACE_TG3,"tgt_flow_nat"},
-	{1 << DBG_TRACE_SPROC,"procfs_set"},
-	{1 << DBG_TRACE_SPROC_H,"procfs_set_host"},
-	{1 << DBG_TRACE_SPROC_I,"procfs_set_ip"},
-	{1 << DBG_TRACE_GPROC,"procfs_get"},
-	{1 << DBG_TRACE_GPROC_H,"procfs_get_host"},
-	{1 << DBG_TRACE_GPROC_H2,"procfs_get_host2"},
-//	{1 << DBG_TRACE_GPROC_I,"procfs_get_ip"},
-	{1 << DBG_TRACE_MATCH_CMD,"match_cmd"},
-	{1 << DBG_TRACE_NETNS,"netns"},
-}; // 27 < 32
-#endif
-
 static int net_ns_id=0;
 static int ndpi_net_id;
 static inline struct ndpi_net *ndpi_pernet(struct net *net)
@@ -469,110 +430,6 @@ static	struct kmem_cache *osdpi_id_cache = NULL;
 struct kmem_cache *ct_info_cache = NULL;
 struct kmem_cache *bt_port_cache = NULL;
 
-#ifdef NDPI_ENABLE_DEBUG_MESSAGES
-#if 0
-static char *dbl_lvl_txt[5] = {
-	"ERR",
-	"TRACE",
-	"DEBUG",
-	"DEBUG2",
-	NULL
-};
-#endif
-/* debug functions */
-static void debug_printf(u_int32_t protocol, void *id_struct, ndpi_log_level_t log_level,
-	const char *file_name, const char *func_name, unsigned line_number, const char * format, ...)
-{
-	struct ndpi_net *n = id_struct ? ((struct ndpi_detection_module_struct *)id_struct)->user_data : NULL;
-//	if(!n || protocol >= NDPI_NUM_BITS)
-//		pr_info("ndpi_debug n=%d, p=%u, l=%s\n",n != NULL,protocol,
-//				log_level < 5 ? dbl_lvl_txt[log_level]:"???");
-//	if(!n || protocol >= NDPI_NUM_BITS) return;
-
-	if( !n || protocol >= NDPI_NUM_BITS || 
-		log_level+1 <= ( ndpi_lib_trace < n->debug_level[protocol] ?
-				ndpi_lib_trace : n->debug_level[protocol]))  {
-		char buf[256];
-		const char *short_fn;
-        	va_list args;
-
-		memset(buf, 0, sizeof(buf));
-        	va_start(args, format);
-		vsnprintf(buf, sizeof(buf)-1, format, args);
-       		va_end(args);
-		short_fn = strrchr(file_name,'/');
-		if(!short_fn)
-			short_fn = file_name;
-		    else
-			short_fn++;
-
-		switch(log_level) {
-		case NDPI_LOG_ERROR:
-                	pr_err("E: P=%d %s:%d %s",protocol, short_fn, line_number, /*func_name,*/ buf);
-			break;
-		case NDPI_LOG_TRACE:
-                	pr_info("T: P=%d %s:%d %s",protocol, short_fn, line_number, /*func_name,*/ buf);
-			break;
-		case NDPI_LOG_DEBUG:
-                	pr_info("D: P=%d %s:%d %s",protocol, short_fn, line_number, /*func_name,*/ buf);
-			break;
-		case NDPI_LOG_DEBUG_EXTRA:
-                	pr_info("D2: P=%d %s:%d %s",protocol, short_fn, line_number, /*func_name,*/ buf);
-			break;
-		default:
-			;
-		}
-        }
-}
-
-void set_debug_trace( struct ndpi_net *n) {
-	int i;
-	const char *t_proto;
-	ndpi_debug_function_ptr dbg_printf = (ndpi_debug_function_ptr)NULL;
-	if(ndpi_lib_trace)
-	    for(i=0; i < NDPI_NUM_BITS; i++) {
-		if(!n->mark[i].mark && !n->mark[i].mask) continue;
-		t_proto = ndpi_get_proto_by_id(n->ndpi_struct,i);
-		if(t_proto) {
-			if(!n->debug_level[i]) continue;
-			dbg_printf = debug_printf;
-			break;
-		}
-	    }
-	if(n->ndpi_struct->ndpi_debug_printf != dbg_printf) {
-		pr_info("ndpi:%s debug message %s\n",n->ns_name,
-			dbg_printf != NULL ? "ON":"OFF");
-		set_ndpi_debug_function(n->ndpi_struct, dbg_printf);
-	} else {
-		if(ndpi_log_debug)
-		  pr_info("ndpi:%s debug %s (not changed)\n",n->ns_name,
-			n->ndpi_struct->ndpi_debug_printf != NULL ? "on":"off");
-	}
-}
-#define DBG_NAMES_CNT (sizeof(dbg_ipt_names)/sizeof(dbg_ipt_names[0]))
-int dbg_ipt_opt(char *lbuf,size_t count) {
-	size_t i,l;
-	lbuf[0] = '\0';
-	for(i=0,l=0; i < DBG_NAMES_CNT;i++) {
-		l += snprintf(&lbuf[l],count - l,"%-20s %c\n",dbg_ipt_names[i].name,
-				ndpi_log_debug & dbg_ipt_names[i].mask ? 'Y':'n');
-		if(l >= count - 1 && i < DBG_NAMES_CNT-1) {
-			pr_err("ndpi:%s buffer %d too small\n",__func__,(int)count);
-			break;
-		}
-	}
-	lbuf[l] = '\0';
-	return l;
-}
-uint32_t dbg_ipt_opt_get(const char *lbuf) {
-	size_t i;
-	if(!strcmp(lbuf,"all")) return 0xffffffff;
-	for(i=0; i < DBG_NAMES_CNT;i++) {
-		if(!strcmp(lbuf,dbg_ipt_names[i].name)) return dbg_ipt_names[i].mask;
-	}
-	return 0;
-}
-#else
 
 uint32_t dbg_ipt_opt_get(const char *lbuf) {
 	return 0;
@@ -581,7 +438,6 @@ int dbg_ipt_opt(char *lbuf,size_t count) {
 	strncpy(lbuf,"off\n",count);
 	return 0;
 }
-#endif
 
 static char *ct_info(const struct nf_conn * ct,char *buf,size_t buf_size,int dir);
 
@@ -3192,10 +3048,6 @@ static int __net_init ndpi_net_init(struct net *net)
                 return -ENOMEM;
 	}
 	ndpi_stun_cache_enable = ndpi_stun_cache_opt;
-	ndpi_debug_print_init = debug_printf;
-#ifdef NDPI_ENABLE_DEBUG_MESSAGES
-	ndpi_debug_level_init = ndpi_lib_trace;
-#endif
 	/* init global detection structure */
 	n->ndpi_struct = ndpi_init_detection_module(ndpi_no_prefs);
 	if (n->ndpi_struct == NULL) {
@@ -3214,11 +3066,6 @@ static int __net_init ndpi_net_init(struct net *net)
 		if(i < NDPI_LAST_IMPLEMENTED_PROTOCOL) continue;
 		n->mark[i].mark = n->mark[i].mask = 0;
         }
-#ifdef NDPI_ENABLE_DEBUG_MESSAGES
-//	pr_info("ndpi_lib_trace %s\n",ndpi_lib_trace ? "Enabled":"Disabled");
-	n->ndpi_struct->ndpi_log_level = ndpi_lib_trace;
-	set_ndpi_debug_function(n->ndpi_struct, ndpi_lib_trace ? debug_printf:NULL);
-#endif
 	if(tls_buf_size < 2) tls_buf_size = 2;
 	if(tls_buf_size > 16) tls_buf_size = 16;
 

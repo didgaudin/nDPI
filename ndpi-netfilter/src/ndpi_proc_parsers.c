@@ -771,37 +771,7 @@ int parse_ndpi_proto(struct ndpi_net *n,char *cmd) {
 		    }
 		}
 		if(!strncmp(v,"debug",5)) {
-#ifdef NDPI_ENABLE_DEBUG_MESSAGES
-			u_int8_t dbg_lvl = 0;
-			m = v+5;
-			if(*m && *m != ' ' && *m != '\t') {
-				pr_err("NDPI: invalid debug settings\n");
-				return 1;
-			}
-			while(*m && (*m == ' ' || *m == '\t')) m++; // space
-			if(*m < '0' || *m > '4') {
-				pr_err("NDPI: debug level must be 0..4\n");
-				return 1;
-			}
-
-			dbg_lvl = *m - '0';
-
-			if(all || any) {
-				for(i=0; i < NDPI_NUM_BITS; i++)
-						n->debug_level[i] = dbg_lvl;
-				set_debug_trace(n);
-				return 0;
-			}
-			if(id >= 0 && id < NDPI_NUM_BITS) {
-				n->debug_level[id] = dbg_lvl;
-				set_debug_trace(n);
-				return 0;
-			}
-			pr_err("%s:%d BUG! id %s\n",__func__,__LINE__,hid);
-			return 1;
-#else
 			pr_err("NDPI: debug not enabled.\n");
-#endif
 		}
 		/* FIXME enable */
 		if(!strncmp(v,"disable",7)) {

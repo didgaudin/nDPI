@@ -3,6 +3,7 @@
 *o.cmd
 *.[ks]o
 *.mod.c
+.*.cmd
 /src/.tmp_versions/
 /src/Module.symvers
 /src/modules.order
