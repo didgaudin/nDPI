@@ -415,6 +415,7 @@ unsigned long
 	       ndpi_pudf=0,ndpi_pudr=0,
 	       ndpi_puo=0;
 
+#ifdef NDPI_ENABLE_DEBUG_MESSAGE
 struct dbg_ipt_names {
 	uint32_t mask;
 	const char *name;
@@ -451,6 +452,7 @@ static struct dbg_ipt_names dbg_ipt_names [] = {
 	{1 << DBG_TRACE_MATCH_CMD,"match_cmd"},
 	{1 << DBG_TRACE_NETNS,"netns"},
 }; // 27 < 32
+#endif
 
 static int net_ns_id=0;
 static int ndpi_net_id;
@@ -571,6 +573,7 @@ uint32_t dbg_ipt_opt_get(const char *lbuf) {
 	return 0;
 }
 #else
+
 uint32_t dbg_ipt_opt_get(const char *lbuf) {
 	return 0;
 }
@@ -1963,12 +1966,12 @@ ndpi_mt(const struct sk_buff *skb, struct xt_action_param *par)
 			if(!result) break;
 		}
 		if(info->clevel) {
-			switch(info->clevel) {
-				case 1: result &= info->clevel < confidence;
+			switch(info->clevel_op) {
+				case 1: result &= info->clevel-1 < confidence;
 					break;
-				case 2: result &= info->clevel > confidence;
+				case 2: result &= info->clevel-1 > confidence;
 					break;
-				default: result &= info->clevel == confidence;
+				default: result &= info->clevel-1 == confidence;
 			}
 			if(_DBG_TRACE_MATCH)
 				pr_info(" ndpi_match confidence: %s : %s\n",
@@ -3190,7 +3193,9 @@ static int __net_init ndpi_net_init(struct net *net)
 	}
 	ndpi_stun_cache_enable = ndpi_stun_cache_opt;
 	ndpi_debug_print_init = debug_printf;
+#ifdef NDPI_ENABLE_DEBUG_MESSAGES
 	ndpi_debug_level_init = ndpi_lib_trace;
+#endif
 	/* init global detection structure */
 	n->ndpi_struct = ndpi_init_detection_module(ndpi_no_prefs);
 	if (n->ndpi_struct == NULL) {
