@@ -253,7 +253,7 @@ static uint16_t gquic_get_u16(const uint8_t *buf, uint32_t version)
   return le16toh(*(uint16_t *)buf);
 }
 
-
+#ifdef NDPI_ENABLE_DEBUG_MESSAGES
 char *__gcry_err(gpg_error_t err, char *buf, size_t buflen)
 {
   gpg_strerror_r(err, buf, buflen);
@@ -263,6 +263,7 @@ char *__gcry_err(gpg_error_t err, char *buf, size_t buflen)
     buf[buflen - 1] = '\0';
   return buf;
 }
+#endif
 
 static uint64_t pntoh64(const void *p)
 {
