@@ -214,6 +214,13 @@ static ndpi_risk_info ndpi_known_risks[] = {
   /* Leave this as last member */
   { NDPI_MAX_RISK,                              NDPI_RISK_LOW,    CLIENT_FAIR_RISK_PERCENTAGE, NDPI_NO_ACCOUNTABILITY   }
 };
+#if !defined(NDPI_CFFI_PREPROCESSING) && defined(__linux__)
+#if defined(__STDC_VERSION__) && __STDC_VERSION__ >= 201112L
+_Static_assert(sizeof(ndpi_known_risks) / sizeof(ndpi_risk_info) == NDPI_MAX_RISK + 1,
+               "Invalid risks length. Do you need to update 'ndpi_known_risks' array?");
+#endif
+#endif
+
 
 /* ****************************************** */
 
@@ -1086,8 +1093,7 @@ int ndpi_set_detection_preferences(struct ndpi_detection_module_struct *ndpi_str
 /* ******************************************************************** */
 
 static int ndpi_validate_protocol_initialization(struct ndpi_detection_module_struct *ndpi_str) {
-  size_t i,j;
-  u_int val;
+  u_int i;
 
   return 0;
 
@@ -1112,13 +1118,6 @@ static int ndpi_validate_protocol_initialization(struct ndpi_detection_module_st
   			    ndpi_str->proto_defaults[i].protoName);
   	return 1;
       }
-  }
-
-  /* Sanity check for risks initialization */
-  val = (sizeof(ndpi_known_risks) / sizeof(ndpi_risk_info)) - 1;
-  if(val != NDPI_MAX_RISK) {
-    NDPI_LOG_ERR(ndpi_str,  "[NDPI] INTERNAL ERROR Invalid ndpi_known_risks[] initialization [%u != %u]\n", val, NDPI_MAX_RISK);
-    return 1;
   }
 
   return 0;
@@ -2526,7 +2525,7 @@ int ac_domain_match_handler(AC_MATCH_t *m, AC_TEXT_t *txt, AC_REP_t *match) {
   AC_PATTERN_t *pattern = m->patterns;
   int i,start,end = m->position;
 
-  for(i=0; i < m->match_num; i++,pattern++) {
+  for(i=0; i < m->match_num && i < 32; i++,pattern++) {
     /*
      * See ac_automata_exact_match()
      * The bit is set if the pattern exactly matches AND
@@ -2817,6 +2816,9 @@ int ndpi_load_ipv4_ptree(struct ndpi_detection_module_struct *ndpi_str,
   FILE *fd;
   int len;
   u_int num_loaded = 0;
+
+  if(!ndpi_str || !path || !ndpi_str->protocols_ptree)
+    return(-1);
 
   fd = fopen(path, "r");
 
@@ -3531,7 +3533,7 @@ int ndpi_add_string_value_to_automa(void *_automa, char *str, u_int32_t num) {
   ac_pattern.length     = strlen(ac_pattern.astring);
 
   rc = ac_automata_add(automa, &ac_pattern);
-  return(rc == ACERR_SUCCESS || rc == ACERR_DUPLICATE_PATTERN ? 0 : -1);
+  return(rc == ACERR_SUCCESS ? 0 : (rc == ACERR_DUPLICATE_PATTERN ? -2 : -1));
 }
 
 /* ****************************************************** */
@@ -3611,8 +3613,10 @@ static int ndpi_match_string_common(AC_AUTOMATA_t *automa, char *string_to_match
   }
 
   if(automa->automata_open) {
+#ifndef FUZZING_BUILD_MODE_UNSAFE_FOR_PRODUCTION
     printf("[%s:%d] [NDPI] %.16s open. Internal error: please call ndpi_finalize_initialization()\n",
 	__FILE__, __LINE__, automa->name);
+#endif
     return(-1);
   }
 
@@ -6829,13 +6833,13 @@ void* ndpi_find_ipv4_category_userdata(struct ndpi_detection_module_struct *ndpi
 				       u_int32_t saddr) {
   ndpi_patricia_node_t *node;
 
-  if(saddr == 0)
+  if(saddr == 0 || !ndpi_str || !ndpi_str->custom_categories.ipAddresses)
     node = NULL;
   else {
     ndpi_prefix_t prefix;
 
     ndpi_fill_prefix_v4(&prefix, (struct in_addr *) &saddr, 32,
-			((ndpi_patricia_tree_t *) ndpi_str->protocols_ptree)->maxbits);
+			((ndpi_patricia_tree_t *) ndpi_str->custom_categories.ipAddresses)->maxbits);
     node = ndpi_patricia_search_best(ndpi_str->custom_categories.ipAddresses, &prefix);
   }
 
@@ -7352,7 +7356,7 @@ u_int32_t ndpi_bytestream_to_number(const u_int8_t *str, u_int16_t max_chars_to_
   val = 0;
 
   // cancel if eof, ' ' or line end chars are reached
-  while(*str >= '0' && *str <= '9' && max_chars_to_read > 0) {
+  while(max_chars_to_read > 0 && *str >= '0' && *str <= '9') {
     val *= 10;
     val += *str - '0';
     str++;
@@ -7839,7 +7843,7 @@ void ndpi_parse_packet_line_info_any(struct ndpi_detection_module_struct *ndpi_s
 
 /* ********************************************************************************* */
 
-u_int16_t ndpi_check_for_email_address(struct ndpi_detection_module_struct *ndpi_str, struct ndpi_flow_struct *flow,
+u_int16_t ndpi_check_for_email_address(struct ndpi_detection_module_struct *ndpi_str,
 				       u_int16_t counter) {
   struct ndpi_packet_struct *packet = ndpi_get_packet_struct(ndpi_str);
 
@@ -8034,18 +8038,6 @@ static void ndpi_int_change_protocol(struct ndpi_detection_module_struct *ndpi_s
 void ndpi_int_change_category(struct ndpi_detection_module_struct *ndpi_str, struct ndpi_flow_struct *flow,
 			      ndpi_protocol_category_t protocol_category) {
   flow->category = protocol_category;
-}
-
-/* ********************************************************************************* */
-
-void ndpi_int_reset_protocol(struct ndpi_flow_struct *flow) {
-  if(flow) {
-    int a;
-
-    for(a = 0; a < NDPI_PROTOCOL_SIZE; a++)
-      flow->detected_protocol_stack[a] = NDPI_PROTOCOL_UNKNOWN;
-    flow->confidence = NDPI_CONFIDENCE_UNKNOWN;
-  }
 }
 
 /* ********************************************************************************* */
@@ -8896,7 +8888,7 @@ u_int16_t ndpi_match_host_subprotocol(struct ndpi_detection_module_struct *ndpi_
 #endif
 
   /* Add punycode check */
-  if(ndpi_strnstr(string_to_match, "xn--", string_to_match_len)) {
+  if(ndpi_check_punycode_string(string_to_match, string_to_match_len)) {
     char str[64] = { '\0' };
 
     strncpy(str, string_to_match, ndpi_min(string_to_match_len, sizeof(str)-1));
@@ -9031,15 +9023,15 @@ const char *ndpi_get_gcrypt_version(void) {
 }
 
 ndpi_proto_defaults_t *ndpi_get_proto_defaults(struct ndpi_detection_module_struct *ndpi_str) {
-  return(ndpi_str->proto_defaults);
+  return(ndpi_str ? ndpi_str->proto_defaults : NULL);
 }
 
 u_int ndpi_get_ndpi_num_supported_protocols(struct ndpi_detection_module_struct *ndpi_str) {
-  return(ndpi_str->ndpi_num_supported_protocols);
+  return(ndpi_str ? ndpi_str->ndpi_num_supported_protocols : 0);
 }
 
 u_int ndpi_get_ndpi_num_custom_protocols(struct ndpi_detection_module_struct *ndpi_str) {
-  return(ndpi_str->ndpi_num_custom_protocols);
+  return(ndpi_str ? ndpi_str->ndpi_num_custom_protocols : 0);
 }
 
 u_int ndpi_get_ndpi_detection_module_size() {
