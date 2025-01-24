@@ -6708,6 +6708,12 @@ void ndpi_free_flow_data(struct ndpi_flow_struct* flow) {
     if(flow->http.request_content_type)
       ndpi_free(flow->http.request_content_type);
 
+    if(flow->http.referer)
+      ndpi_free(flow->http.referer);
+
+    if(flow->http.host)
+      ndpi_free(flow->http.host);
+
     if(flow->http.user_agent)
       ndpi_free(flow->http.user_agent);
 

@@ -1027,7 +1027,7 @@ static void check_content_type_and_change_protocol(struct ndpi_detection_module_
 
   if(packet->authorization_line.ptr != NULL) {
     const char *a = NULL, *b = NULL;
-    
+
     NDPI_LOG_DBG2(ndpi_struct, "Authorization line found %.*s\n",
 		  packet->authorization_line.len, packet->authorization_line.ptr);
 
@@ -1042,16 +1042,16 @@ static void check_content_type_and_change_protocol(struct ndpi_detection_module_
 	if(packet->authorization_line.len > len) {
 	  u_char *content = ndpi_base64_decode((const u_char*)&packet->authorization_line.ptr[len],
 					       packet->authorization_line.len - len, &content_len);
-	  
+
 	  if(content != NULL) {
 	    char *double_dot = strchr((char*)content, ':');
-	    
+
 	    if(double_dot) {
 	      double_dot[0] = '\0';
 	      flow->http.username = ndpi_strdup((char*)content);
 	      flow->http.password = ndpi_strdup(&double_dot[1]);
 	    }
-	    
+
 	    ndpi_free(content);
 	  }
 
@@ -1061,6 +1061,12 @@ static void check_content_type_and_change_protocol(struct ndpi_detection_module_
       }
     }
   }
+
+  if((packet->referer_line.ptr != NULL) && (flow->http.referer == NULL))
+    flow->http.referer = ndpi_strndup(packet->referer_line.ptr, packet->referer_line.len);
+
+  if((packet->host_line.ptr != NULL) && (flow->http.host == NULL))
+    flow->http.host = ndpi_strndup(packet->host_line.ptr, packet->host_line.len);
 
   if(packet->content_line.ptr != NULL) {
     NDPI_LOG_DBG2(ndpi_struct, "Content Type line found %.*s\n",

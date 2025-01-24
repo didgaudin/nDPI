@@ -1354,7 +1354,7 @@ struct ndpi_flow_struct {
     u_int8_t request_version; /* 0=1.0 and 1=1.1. Create an enum for this? */
     u_int8_t websocket:1, request_header_observed:1, first_payload_after_header_observed:1, is_form:1, _pad:4;
     u_int16_t response_status_code; /* 200, 404, etc. */
-    char *url, *content_type /* response */, *request_content_type /* e.g. for POST */, *user_agent, *server;
+    char *url, *content_type /* response */, *request_content_type /* e.g. for POST */, *user_agent, *server, *referer, *host;
     char *detected_os; /* Via HTTP/QUIC User-Agent */
     char *nat_ip; /* Via HTTP X-Forwarded-For */
     char *filename; /* Via HTTP Content-Disposition */
