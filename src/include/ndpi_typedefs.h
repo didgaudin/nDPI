@@ -1117,7 +1117,7 @@ typedef enum {
 
   /* Gambling websites */
   NDPI_PROTOCOL_CATEGORY_GAMBLING = 107,
-  
+  NDPI_PROTOCOL_CATEGORY_HEALTH,
   /*
     IMPORTANT
 

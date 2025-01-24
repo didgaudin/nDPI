@@ -2236,11 +2236,11 @@ static void ndpi_init_protocol_defaults(struct ndpi_detection_module_struct *ndp
 			  ndpi_build_default_ports(ports_a, 4059, 0, 0, 0, 0) /* TCP */,
 			  ndpi_build_default_ports(ports_b, 4059, 0, 0, 0, 0) /* UDP */);
   ndpi_set_proto_defaults(ndpi_str, 1 /* cleartext */, 0 /* nw proto */, NDPI_PROTOCOL_ACCEPTABLE, NDPI_PROTOCOL_HL7,
-			  "HL7", NDPI_PROTOCOL_CATEGORY_IOT_SCADA,
+			  "HL7", NDPI_PROTOCOL_CATEGORY_HEALTH,
 			  ndpi_build_default_ports(ports_a, 2575, 0, 0, 0, 0) /* TCP */,
 			  ndpi_build_default_ports(ports_b, 0, 0, 0, 0, 0) /* UDP */);
   ndpi_set_proto_defaults(ndpi_str, 1 /* cleartext */, 0 /* nw proto */, NDPI_PROTOCOL_ACCEPTABLE, NDPI_PROTOCOL_DICOM,
-			  "DICOM", NDPI_PROTOCOL_CATEGORY_IOT_SCADA,
+			  "DICOM", NDPI_PROTOCOL_CATEGORY_HEALTH,
 			  ndpi_build_default_ports(ports_a, 104, 0, 0, 0, 0) /* TCP */,
 			  ndpi_build_default_ports(ports_b, 0, 0, 0, 0, 0) /* UDP */);
   ndpi_set_proto_defaults(ndpi_str, 1 /* cleartext */, 0 /* nw proto */, NDPI_PROTOCOL_ACCEPTABLE, NDPI_PROTOCOL_CEPH,
@@ -3213,7 +3213,7 @@ void set_ndpi_debug_function(struct ndpi_detection_module_struct *ndpi_str, ndpi
 /* ****************************************** */
 
 /* Keep it in order and in sync with ndpi_protocol_category_t in ndpi_typedefs.h */
-static const char *categories[] = {
+static const char *categories[NDPI_PROTOCOL_NUM_CATEGORIES] = {
   "Unspecified",
   "Media",
   "VPN",
@@ -3321,7 +3321,8 @@ static const char *categories[] = {
   "Allowed_Site",
   "Antimalware",
   "Crypto_Currency",
-  "Gambling"
+  "Gambling",
+  "Health"
 };
 
 #if !defined(NDPI_CFFI_PREPROCESSING) && defined(__linux__)
