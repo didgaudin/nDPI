@@ -1063,10 +1063,10 @@ static void check_content_type_and_change_protocol(struct ndpi_detection_module_
   }
 
   if((packet->referer_line.ptr != NULL) && (flow->http.referer == NULL))
-    flow->http.referer = ndpi_strndup(packet->referer_line.ptr, packet->referer_line.len);
+    flow->http.referer = ndpi_strndup((const char *)packet->referer_line.ptr, packet->referer_line.len);
 
   if((packet->host_line.ptr != NULL) && (flow->http.host == NULL))
-    flow->http.host = ndpi_strndup(packet->host_line.ptr, packet->host_line.len);
+    flow->http.host = ndpi_strndup((const char *)packet->host_line.ptr, packet->host_line.len);
 
   if(packet->content_line.ptr != NULL) {
     NDPI_LOG_DBG2(ndpi_struct, "Content Type line found %.*s\n",
