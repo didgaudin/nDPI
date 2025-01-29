@@ -1760,7 +1760,7 @@ typedef struct {
 
 struct ndpi_analyze_struct {
   u_int64_t *values;
-  u_int64_t min_val, max_val, sum_total;
+  u_int64_t min_val, max_val, sum_total, jitter_total;
   u_int32_t num_data_entries, next_value_insert_index;
   u_int16_t num_values_array_len /* length of the values array */;
 
