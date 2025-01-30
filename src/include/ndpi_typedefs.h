@@ -1393,7 +1393,7 @@ struct ndpi_flow_struct {
     struct {
       u_int8_t num_queries, num_answers, reply_code, num_rsp_addr;
       u_int8_t is_query:1, pad:7;
-      u_int16_t query_type, query_class, rsp_type, edns0_udp_payload_size;
+      u_int16_t transaction_id, query_type, query_class, rsp_type, edns0_udp_payload_size;
       u_int8_t is_rsp_addr_ipv6[MAX_NUM_DNS_RSP_ADDRESSES];
       ndpi_ip_addr_t rsp_addr[MAX_NUM_DNS_RSP_ADDRESSES]; /* The first num_rsp_addr address in a DNS response packet (A and AAAA) */
       u_int32_t rsp_addr_ttl[MAX_NUM_DNS_RSP_ADDRESSES];
