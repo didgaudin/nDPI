@@ -2725,6 +2725,24 @@ u_int16_t ndpi_network_ptree_match(struct ndpi_detection_module_struct *ndpi_str
 
 /* ******************************************* */
 
+u_int16_t ndpi_network_ptree6_match(struct ndpi_detection_module_struct *ndpi_str,
+				    struct in6_addr *pin) {
+  ndpi_prefix_t prefix;
+  ndpi_patricia_node_t *node;
+
+  if(!ndpi_str || !ndpi_str->protocols)
+    return(NDPI_PROTOCOL_UNKNOWN);
+
+  /* Make sure all in network byte order otherwise compares wont work */
+  ndpi_fill_prefix_v6(&prefix, pin, 128,
+		      ((ndpi_patricia_tree_t *) ndpi_str->protocols->v4)->maxbits);
+  node = ndpi_patricia_search_best(ndpi_str->protocols->v4, &prefix);
+
+  return(node ? node->value.u.uv16[0].user_value : NDPI_PROTOCOL_UNKNOWN);
+}
+
+/* ******************************************* */
+
 u_int16_t ndpi_network_port_ptree_match(struct ndpi_detection_module_struct *ndpi_str,
 					struct in_addr *pin /* network byte order */,
 					u_int16_t port /* network byte order */) {

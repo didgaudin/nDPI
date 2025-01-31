@@ -153,6 +153,8 @@ extern "C" {
    */
   u_int16_t ndpi_network_ptree_match(struct ndpi_detection_module_struct *ndpi_struct,
 				     struct in_addr *pin);
+  u_int16_t ndpi_network_ptree6_match(struct ndpi_detection_module_struct *ndpi_str,
+				      struct in6_addr *pin);
 
   /**
    * Returns the nDPI protocol id for IP+port-based protocol detection
