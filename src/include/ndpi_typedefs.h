@@ -1152,6 +1152,22 @@ typedef enum {
   NDPI_PROTOCOL_ANY_CATEGORY /* Used to handle wildcards */
 } ndpi_protocol_category_t;
 
+typedef enum {
+  NDPI_PROTOCOL_QOE_CATEGORY_UNSPECIFIED = 0,    /* Unspecified/default QoE constraints          */
+  NDPI_PROTOCOL_QOE_CATEGORY_VOIP_CALLS,         /* VoIP Calls (G.711, RTP, SIP)                 */
+  NDPI_PROTOCOL_QOE_CATEGORY_VIDEO_CONFERENCING, /* Video Conferencing (Zoom, WebRTC, Skype)     */
+  NDPI_PROTOCOL_QOE_CATEGORY_ONLINE_GAMING,      /* Online Gaming (FPS, MOBA, MMO)               */
+  NDPI_PROTOCOL_QOE_CATEGORY_CLOUD_GAMING,       /* Cloud Gaming (GeForce NOW, Stadia, xCloud)   */
+  NDPI_PROTOCOL_QOE_CATEGORY_WEB_BROWSING,       /* Web Browsing (HTTP, HTTPS)                   */
+  NDPI_PROTOCOL_QOE_CATEGORY_DNS_QUERIES,        /* DNS Queries (UDP/53)                         */
+  NDPI_PROTOCOL_QOE_CATEGORY_LIVE_STREAMING,     /* Live Streaming (Twitch, YouTube Live, etc.)  */
+  NDPI_PROTOCOL_QOE_CATEGORY_BUFFERED_STREAMING, /* Buffered Streaming (Netflix, YouTube, etc.)  */
+  NDPI_PROTOCOL_QOE_CATEGORY_REMOTE_ACCESS,      /* Remote Desktop (RDP, VNC, AnyDesk)           */
+  NDPI_PROTOCOL_QOE_CATEGORY_HFT,                /* High-Frequency Trading (HFT, Stock Trading)  */
+  NDPI_PROTOCOL_QOE_CATEGORY_IOT_OT,             /* IoT Smart Home (Zigbee, Z-Wave, MQTT)        */
+  NDPI_PROTOCOL_QOE_CATEGORY_AV,                 /* Autonomous Vehicles (V2X, 5G C-V2X)          */  
+} ndpi_protocol_qoe_category_t;
+
 /* ntop extensions */
 typedef struct ndpi_proto_defaults {
   char *protoName;
@@ -1162,6 +1178,7 @@ typedef struct ndpi_proto_defaults {
   u_int16_t protoId, protoIdx;
   u_int16_t tcp_default_ports[MAX_DEFAULT_PORTS], udp_default_ports[MAX_DEFAULT_PORTS];
   ndpi_protocol_breed_t protoBreed;
+  ndpi_protocol_qoe_category_t qoeCategory;
   void (*func) (struct ndpi_detection_module_struct *, struct ndpi_flow_struct *flow);
 } ndpi_proto_defaults_t;
 

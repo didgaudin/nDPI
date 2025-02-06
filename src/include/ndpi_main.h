@@ -91,6 +91,7 @@ extern "C" {
 			       ndpi_protocol_breed_t breed,
 			       u_int16_t protoId, char *protoName,
 			       ndpi_protocol_category_t protoCategory,
+			       ndpi_protocol_qoe_category_t qoeCategory,
 			       ndpi_port_range *tcpDefPorts,
 			       ndpi_port_range *udpDefPorts);
   void ndpi_set_risk(struct ndpi_detection_module_struct *ndpi_str, struct ndpi_flow_struct *flow,
