@@ -1,7 +1,7 @@
 /*
  * ndpi_api.h
  *
- * Copyright (C) 2011-24 - ntop.org
+ * Copyright (C) 2011-25 - ntop.org
  *
  * This file is part of nDPI, an open source deep packet inspection
  * library based on the OpenDPI and PACE technology by ipoque GmbH
@@ -586,6 +586,16 @@ extern "C" {
    */
   void ndpi_set_proto_category(struct ndpi_detection_module_struct *ndpi_mod,
 			       u_int16_t protoId, ndpi_protocol_category_t protoCategory);
+
+  /**
+   * Find the QoE category for the specified protocol
+   *
+   * @par     ndpi_mod      = the detection module
+   * @par     protoId       = the protocol identifier we're searhing
+   *
+   */
+  ndpi_protocol_qoe_category_t ndpi_find_protocol_qoe(struct ndpi_detection_module_struct *ndpi_str,
+						      u_int16_t protoId);
 
   /**
    * Check if subprotocols of the specified master protocol are just

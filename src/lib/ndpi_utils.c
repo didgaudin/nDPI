@@ -1,10 +1,7 @@
 /*
  * ndpi_utils.c
  *
- * Copyright (C) 2011-24 - ntop.org and contributors
- *
- * This file is part of nDPI, an open source deep packet inspection
- * library based on the OpenDPI and PACE technology by ipoque GmbH
+ * Copyright (C) 2011-25 - ntop.org and contributors
  *
  * nDPI is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Lesser General Public License as published by
@@ -4140,3 +4137,14 @@ char *ndpi_strip_leading_trailing_spaces(char *ptr, int *ptr_len) {
 
   return ptr;
 }
+
+/* ************************************************************** */
+
+ndpi_protocol_qoe_category_t ndpi_find_protocol_qoe(struct ndpi_detection_module_struct *ndpi_str,
+						    u_int16_t protoId) {
+  if((ndpi_str == NULL) || (!ndpi_is_valid_protoId(protoId)))
+    return(NDPI_PROTOCOL_QOE_CATEGORY_UNSPECIFIED);
+  else
+    return(ndpi_str->proto_defaults[protoId].qoeCategory);
+}
+			     
