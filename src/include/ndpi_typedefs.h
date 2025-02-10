@@ -188,11 +188,11 @@ typedef enum {
     please update ndpi_check_flow_risk_exceptions()
     (in ndpi_utils.c) whenever you add a new parameter
   */
-  
+
   /* Leave this as last member */
   NDPI_MAX_RISK_PARAM_ID
 } ndpi_risk_param_id;
-  
+
 typedef struct {
   ndpi_risk_param_id id;
   void *value; /* char* for strings, u_int32_t* for IPv4 addresses */
@@ -901,7 +901,7 @@ struct ndpi_flow_tcp_struct {
 
   /* NDPI_PROTOCOL_POSTGRES */
   u_int32_t postgres_stage:3;
-  
+
   /* NDPI_PROTOCOL_ICECAST */
   u_int32_t icecast_stage:1;
 
@@ -981,7 +981,7 @@ struct ndpi_flow_udp_struct {
   u_int8_t quic_orig_dest_conn_id_len;
 
   /* NDPI_PROTOCOL_RDP */
-  u_int8_t rdp_to_srv[3], rdp_from_srv[3], rdp_to_srv_pkts, rdp_from_srv_pkts;   
+  u_int8_t rdp_to_srv[3], rdp_from_srv[3], rdp_to_srv_pkts, rdp_from_srv_pkts;
 
   /* NDPI_PROTOCOL_IMO */
   u_int8_t imo_last_one_byte_pkt, imo_last_byte;
@@ -1084,14 +1084,14 @@ typedef enum {
   NDPI_PROTOCOL_CATEGORY_STREAMING,         /* Streaming protocols */
   NDPI_PROTOCOL_CATEGORY_SYSTEM_OS,         /* System/Operating System level applications */
   NDPI_PROTOCOL_CATEGORY_SW_UPDATE,         /* Software update */
-  
+
   /* See #define NUM_CUSTOM_CATEGORIES */
   NDPI_PROTOCOL_CATEGORY_CUSTOM_1,          /* User custom category 1 */
   NDPI_PROTOCOL_CATEGORY_CUSTOM_2,          /* User custom category 2 */
   NDPI_PROTOCOL_CATEGORY_CUSTOM_3,          /* User custom category 3 */
   NDPI_PROTOCOL_CATEGORY_CUSTOM_4,          /* User custom category 4 */
   NDPI_PROTOCOL_CATEGORY_CUSTOM_5,          /* User custom category 5 */
-  
+
   /* Further categories... */
   NDPI_PROTOCOL_CATEGORY_MUSIC,
   NDPI_PROTOCOL_CATEGORY_VIDEO,
@@ -1111,7 +1111,7 @@ typedef enum {
   NDPI_PROTOCOL_CATEGORY_VIRTUAL_ASSISTANT,
   NDPI_PROTOCOL_CATEGORY_CYBERSECURITY,
   NDPI_PROTOCOL_CATEGORY_ADULT_CONTENT,
-  
+
   /* Some custom categories */
   CUSTOM_CATEGORY_MINING           = 99,
   CUSTOM_CATEGORY_MALWARE          = 100,
@@ -1125,7 +1125,7 @@ typedef enum {
     to track malware, spam etc.
   */
   CUSTOM_CATEGORY_ANTIMALWARE      = 105,
-  
+
   /*
     Crypto Currency e.g Bitcoin, Litecoin, Etherum ..et.
   */
@@ -1165,7 +1165,9 @@ typedef enum {
   NDPI_PROTOCOL_QOE_CATEGORY_REMOTE_ACCESS,      /* Remote Desktop (RDP, VNC, AnyDesk)           */
   NDPI_PROTOCOL_QOE_CATEGORY_HFT,                /* High-Frequency Trading (HFT, Stock Trading)  */
   NDPI_PROTOCOL_QOE_CATEGORY_IOT_OT,             /* IoT Smart Home (Zigbee, Z-Wave, MQTT)        */
-  NDPI_PROTOCOL_QOE_CATEGORY_AV,                 /* Autonomous Vehicles (V2X, 5G C-V2X)          */  
+  NDPI_PROTOCOL_QOE_CATEGORY_AV,                 /* Autonomous Vehicles (V2X, 5G C-V2X)          */
+
+  NDPI_PROTOCOL_QOE_CATEGORY_MAX                 /* Leave it as last entry !!!                   */
 } ndpi_protocol_qoe_category_t;
 
 /* ntop extensions */
@@ -1221,7 +1223,7 @@ typedef void ndpi_bitmap64;
 typedef void ndpi_bitmap64_fuse; /* probabilistic */
 typedef void ndpi_bitmap_iterator;
 typedef void ndpi_filter;
-    
+
 typedef struct {
   u_int32_t num_allocated_entries, num_used_entries;
   struct ndpi_binary_bitmap_entry *entries;
@@ -1252,7 +1254,7 @@ typedef struct {
   u_int16_t port;
   u_int16_t is_ipv6: 1, _pad: 15;
 } ndpi_address_port;
-  
+
 struct tls_heuristics {
   /*
     TLS heuristics for detecting browsers usage
@@ -1263,7 +1265,7 @@ struct tls_heuristics {
 
 struct ndpi_risk_information {
   ndpi_risk_enum id;
-  char *info;  
+  char *info;
 };
 
 struct ndpi_metadata_monitoring {
@@ -1315,7 +1317,7 @@ struct ndpi_flow_struct {
 
   /* First Packet Classification info */
   struct ndpi_fpc_info fpc;
-  
+
   /* Flow addresses (useful for LRU lookups in ndpi_detection_giveup())
      and ports. All in *network* byte order.
      Client and server.
@@ -1325,7 +1327,7 @@ struct ndpi_flow_struct {
     u_int8_t v6[16];
   } c_address, s_address;	/* For some unknown reasons, x86_64-w64-mingw32-gcc doesn't like the name "s_addr" */
   u_int16_t c_port, s_port;
-  
+
   // -----------------------------------------
 
   u_int8_t max_extra_packets_to_check;
@@ -1376,7 +1378,7 @@ struct ndpi_flow_struct {
     char *fingerprint;
     u_int8_t os_hint;
   } tcp;
-  
+
   /*
     This structure below will not not stay inside the protos
     structure below as HTTP is used by many subprotocols
@@ -1454,7 +1456,7 @@ struct ndpi_flow_struct {
 
     struct {
       char currency[16];
-    } mining;  
+    } mining;
 
     struct {
       char *server_names, *advertised_alpns, *negotiated_alpn, *tls_supported_versions, *issuerDN, *subjectDN;
@@ -1619,8 +1621,8 @@ struct ndpi_flow_struct {
 
   /* NDPI_PROTOCOL_TINC */
   u_int8_t tinc_state;
- 
-   /* NDPI_PROTOCOL_RTCP */ 
+
+   /* NDPI_PROTOCOL_RTCP */
    u_int8_t rtcp_stage:2;
 
    /* NDPI_PROTOCOL_RTP */
@@ -1632,7 +1634,7 @@ struct ndpi_flow_struct {
   u_int16_t flow_payload_len;
   char *flow_payload;
 
-  /* 
+  /*
      Leave this field below at the end
      The field below can be used by third
      party dissectors for storing private data
