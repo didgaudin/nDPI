@@ -11262,6 +11262,7 @@ char *ndpi_hostname_sni_set(struct ndpi_flow_struct *flow,
     for(i = 0; i < len; i++) {
       char c = value[value_len - len + i];
       if(!c) break;
+      if(c == ':') break; /* e.g. skip port in "239.255.255.250:1900" */
       if(normalize & NDPI_HOSTNAME_NORM_LC) c = tolower(c);
       if(normalize & NDPI_HOSTNAME_NORM_REPLACE_IC) {
         if (c == '\t') c = ' ';
