@@ -307,12 +307,13 @@ static void ndpi_rtp_search(struct ndpi_detection_module_struct *ndpi_struct,
   is_rtp = is_rtp_or_rtcp(ndpi_struct, payload, payload_len, &seq);
 
   if(is_rtp == IS_RTP) {
+    flow->protos.rtp.payload_type = payload[1] & 0x7F;
+    
     if(flow->rtp_stage == 2) {
       if(flow->l4_proto == IPPROTO_UDP &&
          flow->l4.udp.line_pkts[0] >= 2 && flow->l4.udp.line_pkts[1] >= 2) {
         /* It seems that it is a LINE stuff; let its dissector to evaluate */
-      } else if(flow->l4_proto == IPPROTO_UDP &&
-                flow->l4.udp.epicgames_stage > 0) {
+      } else if(flow->l4_proto == IPPROTO_UDP && flow->l4.udp.epicgames_stage > 0) {
         /* It seems that it is a EpicGames stuff; let its dissector to evaluate */
       } else if(flow->rtp_seq_set[packet->packet_direction] &&
                 flow->rtp_seq[packet->packet_direction] == seq) {
@@ -325,7 +326,7 @@ static void ndpi_rtp_search(struct ndpi_detection_module_struct *ndpi_struct,
         NDPI_EXCLUDE_PROTO(ndpi_struct, flow);
         NDPI_EXCLUDE_PROTO_EXT(ndpi_struct, flow, NDPI_PROTOCOL_RTCP);
       } else {
-        rtp_get_stream_type(payload[1] & 0x7F, &flow->flow_multimedia_types, NDPI_PROTOCOL_UNKNOWN);
+        rtp_get_stream_type(flow->protos.rtp.payload_type, &flow->flow_multimedia_types, NDPI_PROTOCOL_UNKNOWN);
 
         NDPI_LOG_INFO(ndpi_struct, "Found RTP\n");
         ndpi_int_rtp_add_connection(ndpi_struct, flow, NDPI_PROTOCOL_RTP);

@@ -1600,6 +1600,10 @@ struct ndpi_flow_struct {
       char *st;
       char *user_agent;
     } ssdp;
+
+    struct {
+      u_int8_t payload_type;
+    } rtp;
 } protos;
 
   /* **Packet** metadata for flows where monitoring is enabled. It is reset after each packet! */

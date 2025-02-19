@@ -317,6 +317,10 @@ typedef struct ndpi_flow_info {
   } http;
 
   struct {
+    u_int8_t payload_type;
+  } rtp;
+
+  struct {
     ndpi_address_port_list mapped_address, peer_address,
       relayed_address, response_origin, other_address;
     u_int16_t rtp_counters[2];

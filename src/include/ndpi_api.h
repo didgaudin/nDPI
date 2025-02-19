@@ -600,6 +600,14 @@ extern "C" {
 						      u_int16_t protoId);
 
   /**
+   * Return the name of a RTP payload type
+   *
+   * @par     payload_type = the RTP payload type
+   * @return  The symbolic payload type or "Unknown" if not found
+   */
+  const char* ndpi_rtp_payload_type2str(u_int8_t payload_type);
+
+  /**
    * Check if subprotocols of the specified master protocol are just
    * informative (and not real)
    *

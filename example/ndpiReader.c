@@ -1870,6 +1870,13 @@ static void printFlow(u_int32_t id, struct ndpi_flow_info *flow, u_int16_t threa
       fprintf(out, "[Stream Content: %s]", ndpi_multimedia_flowtype2str(content, sizeof(content), flow->multimedia_flow_types));
     }
 
+    if((flow->detected_protocol.proto.master_protocol == NDPI_PROTOCOL_RTP) || (flow->detected_protocol.proto.app_protocol == NDPI_PROTOCOL_RTP))
+      {
+	fprintf(out, "[Payload Type: %s (%u)]",
+		ndpi_rtp_payload_type2str(flow->rtp.payload_type),
+		flow->rtp.payload_type);
+      }
+
     fprintf(out, "[%s]",
 	    ndpi_is_encrypted_proto(ndpi_thread_info[thread_id].workflow->ndpi_struct,
 				    flow->detected_protocol) ? "Encrypted" : "ClearText");

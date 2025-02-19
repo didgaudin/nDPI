@@ -1637,6 +1637,9 @@ void process_ndpi_collected_info(struct ndpi_workflow * workflow, struct ndpi_fl
     ndpi_snprintf(flow->http.password, sizeof(flow->http.password), "%s", flow->ndpi_flow->http.password ? flow->ndpi_flow->http.password : "");
   }
 
+  if(is_ndpi_proto(flow, NDPI_PROTOCOL_RTP))
+    flow->rtp.payload_type = flow->ndpi_flow->protos.rtp.payload_type;
+     
   ndpi_snprintf(flow->http.user_agent,
                 sizeof(flow->http.user_agent),
                 "%s", (flow->ndpi_flow->http.user_agent ? flow->ndpi_flow->http.user_agent : ""));

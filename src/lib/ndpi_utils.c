@@ -4234,3 +4234,38 @@ ndpi_protocol_qoe_category_t ndpi_find_protocol_qoe(struct ndpi_detection_module
     return(ndpi_str->proto_defaults[protoId].qoeCategory);
 }
 			     
+/* ************************************************************** */
+
+const char* ndpi_rtp_payload_type2str(u_int8_t payload_type) {
+  switch(payload_type) {
+  case 0:   return("ITU-T G.711 PCMU");
+  case 1:   return("USA Federal Standard FS-1016");
+  case 2:   return("ITU-T G.721");
+  case 3:   return("GSM 06.10");
+  case 4:   return("ITU-T G.723");
+  case 5:   return("DVI4 8000 samples/s");
+  case 6:   return("DVI4 16000 samples/s");
+  case 8:   return("ITU-T G.711 PCMA");
+  case 9:   return("ITU-T G.722");
+  case 10:  return("16-bit uncompressed audio, stereo");
+  case 11:  return("16-bit uncompressed audio, monaural");
+  case 12:  return("Qualcomm Code Excited Linear Predictive coding");
+  case 13:  return("Comfort noise");
+  case 14:  return("MPEG-I/II Audio");
+  case 15:  return("ITU-T G.728");
+  case 16:  return("DVI4 11025 samples/s");
+  case 17:  return("DVI4 22050 samples/s");
+  case 18:  return("ITU-T G.729");
+  case 19:  return("Comfort noise (old)");
+  case 25:  return("Sun CellB video encoding");
+  case 26:  return("JPEG-compressed video");
+  case 28:  return("'nv' program");
+  case 31:  return("ITU-T H.261");
+  case 32:  return("MPEG-I/II Video");
+  case 33:  return("MPEG-II transport streams");
+  case 34:  return("ITU-T H.263");
+  case 98:  return("AMR-WB");
+  case 127: return("EVS");
+  default:  return("Unknown");
+  }
+}
