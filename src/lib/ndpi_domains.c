@@ -132,7 +132,7 @@ const char* ndpi_get_host_domain_suffix(struct ndpi_detection_module_struct *ndp
 const char* ndpi_get_host_domain(struct ndpi_detection_module_struct *ndpi_str,
 				 const char *hostname) {
   const char *ret;
-  char *dot;
+  char *dot, *first_dc;
   u_int16_t domain_id, len;
   
   if(!ndpi_str)
@@ -147,14 +147,24 @@ const char* ndpi_get_host_domain(struct ndpi_detection_module_struct *ndpi_str,
   else
     len--;
 
-  if(isdigit(hostname[len]))
+  if((isdigit(hostname[len])) || (hostname[len] == ']' /* IPv6 address [...] */ ))
     return(hostname);
-  
+
+  if((first_dc = strchr(hostname, ':')) != NULL) {
+    char *last_dc = strchr(hostname, ':');
+
+    if((last_dc != NULL) && (first_dc != last_dc))
+      return(hostname); /* Numeric IPv6 address */
+  }
+
   ret = ndpi_get_host_domain_suffix(ndpi_str, hostname, &domain_id);
 
   if((ret == NULL) || (ret == hostname))
     return(hostname);
 
+  if(strcmp(ret, "in-addr.arpa") == 0)
+    return(ret);
+    
   dot = ndpi_strrstr(hostname, ret);
 
   if(dot == NULL || dot == hostname)

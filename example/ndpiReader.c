@@ -2986,7 +2986,7 @@ static void setupDetection(u_int16_t thread_id, pcap_t * pcap_handle,
 
   if(_domain_suffixes)
     ndpi_load_domain_suffixes(ndpi_thread_info[thread_id].workflow->ndpi_struct, _domain_suffixes);
-  
+
   if(_riskyDomainFilePath)
     ndpi_load_risk_domain_file(ndpi_thread_info[thread_id].workflow->ndpi_struct, _riskyDomainFilePath);
 
@@ -3934,8 +3934,8 @@ static void printFlowsStats() {
 	}
       }
 
-      for(i=0; i<num_flows; i++)	
-	printFlowSerialized(all_flows[i].flow);	
+      for(i=0; i<num_flows; i++)
+	printFlowSerialized(all_flows[i].flow);
     }
 
   ndpi_free(all_flows);
@@ -4539,7 +4539,7 @@ static int getNextPcapFileFromPlaylist(u_int16_t thread_id, char filename[], u_i
 static void configurePcapHandle(pcap_t * pcap_handle) {
   if(!pcap_handle)
     return;
-  
+
   if(bpfFilter != NULL) {
     if(!bpf_cfilter) {
       if(pcap_compile(pcap_handle, &bpf_code, bpfFilter, 1, 0xFFFFFF00) < 0) {
@@ -4548,7 +4548,7 @@ static void configurePcapHandle(pcap_t * pcap_handle) {
       }
       bpf_cfilter = &bpf_code;
     }
-    
+
     if(pcap_setfilter(pcap_handle, bpf_cfilter) < 0) {
       printf("pcap_setfilter error: '%s'\n", pcap_geterr(pcap_handle));
     } else {
@@ -6473,6 +6473,9 @@ void domainsUnitTest() {
 
     assert(ndpi_load_domain_suffixes(ndpi_str, (char*)lists_path) == 0);
 
+    assert(strcmp(ndpi_get_host_domain(ndpi_str, "1.0.0.127.in-addr.arpa"), "in-addr.arpa") == 0);
+    assert(strcmp(ndpi_get_host_domain(ndpi_str, "fe80::fd:5447:b2d1:40e0"), "fe80::fd:5447:b2d1:40e0") == 0);
+    assert(strcmp(ndpi_get_host_domain(ndpi_str, "192.168.1.2"), "192.168.1.2") == 0);
     assert(strcmp(ndpi_get_host_domain(ndpi_str, "extension.femetrics.grammarly.io"), "grammarly.io") == 0);
     assert(strcmp(ndpi_get_host_domain(ndpi_str, "www.ovh.commander1.com"), "commander1.com") == 0);
 
@@ -6693,7 +6696,7 @@ int main(int argc, char **argv) {
     ndpiCheckHostStringMatch(domain_to_check);
     exit(0);
   }
-  
+
   if(ip_port_to_check) {
     ndpiCheckIPMatch(ip_port_to_check);
     exit(0);
@@ -6710,7 +6713,7 @@ int main(int argc, char **argv) {
 #ifdef CUSTOM_NDPI_PROTOCOLS
 #include "../../nDPI-custom/ndpiReader_init.c"
 #endif
-  
+
   if(!quiet_mode) {
     printf("\n-----------------------------------------------------------\n"
 	   "* NOTE: This is demo app to show *some* nDPI features.\n"
