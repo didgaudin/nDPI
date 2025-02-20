@@ -1872,9 +1872,21 @@ static void printFlow(u_int32_t id, struct ndpi_flow_info *flow, u_int16_t threa
 
     if((flow->detected_protocol.proto.master_protocol == NDPI_PROTOCOL_RTP) || (flow->detected_protocol.proto.app_protocol == NDPI_PROTOCOL_RTP))
       {
-	fprintf(out, "[Payload Type: %s (%u)]",
-		ndpi_rtp_payload_type2str(flow->rtp.payload_type),
-		flow->rtp.payload_type);
+	if (flow->rtp[0 /* cli -> srv */].payload_detected || flow->rtp[1].payload_detected) {
+	  fprintf(out, "[Payload Type: ");
+
+	  if (flow->rtp[0].payload_detected)
+	    fprintf(out, "%s (%u.%u)",
+		    ndpi_rtp_payload_type2str(flow->rtp[0].payload_type, flow->rtp[0].evs_subtype), flow->rtp[0].payload_type, flow->rtp[0].evs_subtype);
+
+	  if(flow->rtp[1 /* srv -> cli */].payload_detected) {
+	    if (flow->rtp[0].payload_detected) fprintf(out, " / ");
+	    
+	    fprintf(out, "%s (%u.%u)]",
+		    ndpi_rtp_payload_type2str(flow->rtp[1].payload_type, flow->rtp[1].evs_subtype), flow->rtp[1].payload_type, flow->rtp[1].evs_subtype);
+	  } else
+	    fprintf(out, "]");
+	}
       }
 
     fprintf(out, "[%s]",

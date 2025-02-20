@@ -316,9 +316,7 @@ typedef struct ndpi_flow_info {
     u_int response_status_code;
   } http;
 
-  struct {
-    u_int8_t payload_type;
-  } rtp;
+  struct rtp_info rtp[2 /* directions */];
 
   struct {
     ndpi_address_port_list mapped_address, peer_address,

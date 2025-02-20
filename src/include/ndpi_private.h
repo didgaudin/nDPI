@@ -296,6 +296,7 @@ struct ndpi_detection_module_config_struct {
 
   int stun_opportunistic_tls_enabled;
   int stun_max_packets_extra_dissection;
+  int rtp_max_packets_extra_dissection;
   int stun_mapped_address_enabled;
   int stun_response_origin_enabled;
   int stun_other_address_enabled;

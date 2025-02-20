@@ -1216,7 +1216,6 @@ static void serialize_monitoring_metadata(struct ndpi_flow_info *flow)
     case NDPI_PROTOCOL_STUN:
     case NDPI_PROTOCOL_DTLS:
     case NDPI_PROTOCOL_SRTP:
-
       ndpi_serialize_start_of_block(&flow->ndpi_flow_serializer, "stun");
 
       if(flow->stun.mapped_address.num_aps > 0) {
@@ -1638,7 +1637,7 @@ void process_ndpi_collected_info(struct ndpi_workflow * workflow, struct ndpi_fl
   }
 
   if(is_ndpi_proto(flow, NDPI_PROTOCOL_RTP))
-    flow->rtp.payload_type = flow->ndpi_flow->protos.rtp.payload_type;
+    memcpy(&flow->rtp, &flow->ndpi_flow->protos.rtp, sizeof(flow->rtp));
      
   ndpi_snprintf(flow->http.user_agent,
                 sizeof(flow->http.user_agent),

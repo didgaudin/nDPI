@@ -4236,7 +4236,8 @@ ndpi_protocol_qoe_category_t ndpi_find_protocol_qoe(struct ndpi_detection_module
 			     
 /* ************************************************************** */
 
-const char* ndpi_rtp_payload_type2str(u_int8_t payload_type) {
+/* https://gitlab.com/wireshark/wireshark/-/blob/master/epan/dissectors/packet-rtp.c */
+const char* ndpi_rtp_payload_type2str(u_int8_t payload_type, u_int32_t evs_payload_type) {
   switch(payload_type) {
   case 0:   return("ITU-T G.711 PCMU");
   case 1:   return("USA Federal Standard FS-1016");
@@ -4265,7 +4266,62 @@ const char* ndpi_rtp_payload_type2str(u_int8_t payload_type) {
   case 33:  return("MPEG-II transport streams");
   case 34:  return("ITU-T H.263");
   case 98:  return("AMR-WB");
-  case 127: return("EVS");
+  case 118: return("AMR"); /* Adptive Multirate */
+  case 126: /* Enhanced Voice Services */
+  case 127: /* Enhanced Voice Services */
+    {
+      switch(evs_payload_type) {
+	/* https://gitlab.com/wireshark/wireshark/-/blob/master/epan/dissectors/packet-evs.c */
+
+      case 0x0: return("AMR-WB IO 6.6 kbps");
+      case 0x1: return("AMR-WB IO 8.85 kbps");
+      case 0x2: return("AMR-WB IO 12.65 kbps");
+      case 0x3: return("AMR-WB IO 14.24 kbps");
+      case 0x4: return("AMR-WB IO 15.85 kbps");
+      case 0x5: return("AMR-WB IO 18.25 kbps");
+      case 0x6: return("AMR-WB IO 19.85 kbps");
+      case 0x7: return("AMR-WB IO 23.05 kbps");
+      case 0x8: return("AMR-WB IO 23.85 kbps");
+      case 0x9: return("AMR-WB IO 2.0 kbps SID");
+	
+	/* ** */
+	/* Dummy SWB 30 offset */
+      case 0x3+30: return("SWB 9.6 kbps");
+      case 0x4+30: return("SWB 13.2 kbps");
+      case 0x5+30: return("SWB 16.4 kbps");
+      case 0x6+30: return("SWB 24.4 kbps");
+      case 0x7+30: return("SWB 32 kbps");
+      case 0x8+30: return("SWB 48 kbps");
+      case 0x9+30: return("SWB 64 kbps");
+      case 0xa+30: return("SWB 96 kbps");
+      case 0xb+30: return("SWB 128 kbps");
+	
+
+      case    48: return("EVS Primary SID 2.4");
+      case   136: return("EVS AMR-WB IO 6.6");
+      case   144: return("EVS Primary 7.2");
+      case   160: return("EVS Primary 8.0");
+      case   184: return("EVS AMR-WB IO 8.85");
+      case   192: return("EVS Primary 9.6");
+      case   256: return("EVS AMR-WB IO 12.65");
+      case   264: return("EVS Primary 13.2");
+      case   288: return("EVS AMR-WB IO 14.25");
+      case   320: return("EVS AMR-WB IO 15.85");
+      case   328: return("EVS Primary 16.4");
+      case   368: return("EVS AMR-WB IO 18.25");
+      case   400: return("EVS AMR-WB IO 19.85");
+      case   464: return("EVS AMR-WB IO 23.05");
+      case   480: return("EVS AMR-WB IO 23.85");
+      case   488: return("EVS Primary 24.4");
+      case   640: return("EVS Primary 32.0");
+      case   960: return("EVS Primary 48.0");
+      case  1280: return("EVS Primary 64.0");
+      case  1920: return("EVS Primary 96.0");
+      case  2560: return("EVS Primary 128.0");
+      default:    return("EVS 13.2");
+      }
+    }
+    break;
   default:  return("Unknown");
   }
 }
